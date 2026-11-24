@@ -1,0 +1,30 @@
+<ap-page-header eyebrow="Admin" title="Cohorts" subtitle="Codes follow Cohort - YY-MM-# from the Phase 1 start date.">
+  <button type="button" class="btn btn-primary" disabled title="Arrives in a later milestone">New cohort</button>
+</ap-page-header>
+
+<ul class="grid gap-4 md:grid-cols-2">
+  @for (c of ctx.cohorts(); track c.id) {
+    <li class="card p-5">
+      <div class="flex items-start justify-between gap-3">
+        <div class="min-w-0">
+          <p class="font-mono text-xs text-fg-subtle">{{ c.code }}</p>
+          <h2 class="truncate text-lg font-semibold">{{ c.displayName }}</h2>
+        </div>
+        <ap-phase-pill [phase]="ctx.phaseOf(c)" />
+      </div>
+      <dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
+        <div class="rounded-xl bg-surface-2 p-3">
+          <dt class="text-xs font-medium text-fg-subtle">Phase 1 · Habits</dt>
+          <dd class="mt-1 tabular-nums">{{ c.phase1StartDate | date: 'd MMM' }} – {{ c.phase1EndDate | date: 'd MMM y' }}</dd>
+        </div>
+        <div class="rounded-xl bg-surface-2 p-3">
+          <dt class="text-xs font-medium text-fg-subtle">Phase 2 · Sprints</dt>
+          <dd class="mt-1 tabular-nums">{{ c.phase2StartDate | date: 'd MMM' }} – {{ c.phase2EndDate | date: 'd MMM y' }}</dd>
+        </div>
+      </dl>
+      <p class="mt-3 flex items-center gap-1.5 text-xs text-fg-subtle">
+        <ap-icon name="calendar-check" [size]="14" /> {{ c.nonWorkingDays.length }} non-working days configured
+      </p>
+    </li>
+  }
+</ul>

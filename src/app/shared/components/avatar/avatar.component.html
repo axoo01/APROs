@@ -1,0 +1,5 @@
+@if (src(); as url) {
+  <img [src]="url" [alt]="name()" class="size-full rounded-full object-cover" />
+} @else {
+  <span aria-hidden="true">{{ initials() }}</span>
+}

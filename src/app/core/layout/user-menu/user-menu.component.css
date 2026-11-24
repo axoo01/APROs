@@ -1,0 +1,17 @@
+.menu-item {
+  display: flex;
+  width: 100%;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: 0.75rem;
+  border-radius: 0.75rem;
+  padding-inline: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: left;
+  transition: background-color 120ms;
+}
+.menu-item:hover,
+.menu-item:focus-visible {
+  background-color: var(--ap-surface-2);
+}

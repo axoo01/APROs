@@ -1,0 +1,20 @@
+<a
+  href="#main"
+  class="sr-only z-[60] rounded-xl bg-surface px-4 py-2 font-semibold focus:not-sr-only focus:fixed focus:left-4 focus:top-4"
+>
+  Skip to content
+</a>
+<div class="min-h-dvh lg:grid lg:grid-cols-[16.5rem_minmax(0,1fr)]">
+  <ap-side-nav class="hidden lg:flex" />
+  <div class="flex min-h-dvh min-w-0 flex-col">
+    <ap-top-bar />
+    <main
+      id="main"
+      tabindex="-1"
+      class="mx-auto w-full max-w-7xl flex-1 px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-5 outline-none sm:px-6 lg:px-8 lg:pb-12 lg:pt-8"
+    >
+      <router-outlet />
+    </main>
+  </div>
+</div>
+<ap-bottom-nav class="lg:hidden" />

@@ -1,0 +1,23 @@
+<div
+  class="pointer-events-none fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-50 flex flex-col items-center gap-2 px-4 lg:bottom-6 lg:items-end lg:px-6"
+  aria-live="polite"
+  aria-atomic="false"
+>
+  @for (t of toasts.toasts(); track t.id) {
+    <div
+      class="glass pointer-events-auto flex w-full max-w-sm items-center gap-3 rounded-2xl border px-4 py-3 text-sm shadow-[var(--shadow-float)] [animation:toast-in_220ms_var(--ease-spring)]"
+      role="status"
+    >
+      <ap-icon [name]="icon(t)" [size]="18" [class]="tone(t)" />
+      <p class="min-w-0 flex-1 text-fg">{{ t.message }}</p>
+      @if (t.action; as action) {
+        <button type="button" class="btn btn-ghost min-h-9 px-3 text-accent" (click)="runAction(t)">
+          {{ action.label }}
+        </button>
+      }
+      <button type="button" class="btn btn-ghost min-h-9 px-2" (click)="toasts.dismiss(t.id)" aria-label="Dismiss">
+        <ap-icon name="x" [size]="16" />
+      </button>
+    </div>
+  }
+</div>

@@ -1,0 +1,48 @@
+<ap-page-header title="Settings" />
+
+<div class="max-w-2xl space-y-6">
+  <section class="card p-5" aria-labelledby="appearance">
+    <h2 id="appearance" class="font-semibold">Appearance</h2>
+    <div class="mt-4 grid grid-cols-3 gap-2" role="radiogroup" aria-labelledby="appearance">
+      @for (opt of themes; track opt.value) {
+        <button
+          type="button"
+          role="radio"
+          [attr.aria-checked]="theme.preference() === opt.value"
+          class="btn btn-secondary aria-checked:border-accent aria-checked:bg-accent-soft aria-checked:text-accent"
+          (click)="theme.set(opt.value)"
+        >
+          {{ opt.label }}
+        </button>
+      }
+    </div>
+  </section>
+
+  @if (config.demoMode) {
+    <section class="card p-5" aria-labelledby="demo-data">
+      <h2 id="demo-data" class="font-semibold">Demo data</h2>
+      <p class="mt-1 text-sm text-fg-muted">
+        Everything you record is stored in this browser only.
+        @if (!demoData.isPersistent) {
+          <span class="font-medium text-warning">Storage is unavailable (private mode?) — changes will be lost on reload.</span>
+        }
+      </p>
+      <button type="button" class="btn btn-secondary mt-4" (click)="confirm.set(true)">
+        <ap-icon name="refresh" [size]="18" /> Reset demo data
+      </button>
+    </section>
+  }
+
+  <section class="card p-5 text-sm" aria-labelledby="about">
+    <h2 id="about" class="font-semibold">About</h2>
+    <dl class="mt-3 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-fg-muted">
+      <dt>Version</dt><dd class="text-fg">0.1.0 · Milestone 1</dd>
+      <dt>Data source</dt><dd class="text-fg">Local (browser storage)</dd>
+      <dt>Today</dt><dd class="text-fg">{{ today() | date: 'fullDate' }}</dd>
+    </dl>
+  </section>
+</div>
+
+<ap-confirm-dialog [(open)]="confirm" title="Reset demo data?" confirmLabel="Reset data" tone="danger" (confirmed)="reset()">
+  This restores the original pre-seeded cohorts, apprentices and attendance history. Changes made in this browser will be lost.
+</ap-confirm-dialog>

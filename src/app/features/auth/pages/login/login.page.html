@@ -1,0 +1,150 @@
+<!--
+  Always-on brand scene: `.theme-dark` forces dark tokens here regardless of the user's theme,
+  so the frosted card, fields and buttons read correctly on navy in both light and dark mode.
+-->
+<div class="theme-dark relative isolate min-h-dvh overflow-hidden bg-primary-700 text-fg">
+  <!-- Ambient light: gives the glass card something to refract -->
+  <div class="pointer-events-none absolute inset-0 -z-10" aria-hidden="true">
+    <div class="absolute -left-40 -top-40 size-[34rem] rounded-full bg-orange-500/25 blur-[120px]"></div>
+    <div class="absolute -bottom-48 right-[-10rem] size-[38rem] rounded-full bg-light-blue-500/20 blur-[130px]"></div>
+    <div class="absolute left-1/2 top-1/3 size-[26rem] rounded-full bg-ultramarine-400/15 blur-[120px]"></div>
+    <!-- The logo's three bars, enlarged, sitting behind the card -->
+    <div class="absolute right-[6%] top-1/2 hidden -translate-y-1/2 flex-col gap-8 lg:flex">
+      <span class="h-10 w-[28rem] rounded-full bg-white/[0.06]"></span>
+      <span class="h-10 w-[28rem] rounded-full bg-orange-500/60"></span>
+      <span class="h-10 w-[28rem] rounded-full bg-white/[0.06]"></span>
+    </div>
+  </div>
+
+  <div
+    class="mx-auto grid min-h-dvh max-w-7xl items-center gap-10 px-5 pb-10 pt-[calc(2rem+env(safe-area-inset-top))] lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-16 lg:px-12 lg:py-12"
+  >
+    <!-- Brand story -->
+    <section class="flex flex-col self-stretch text-white" aria-label="AmaliTech APROs">
+      <ap-logo [size]="18" class="text-white" />
+
+      <div class="mt-10 max-w-xl lg:my-auto">
+        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-orange-300">APROs</p>
+        <h1 class="mt-3 text-[2rem] font-semibold leading-[1.1] sm:text-5xl lg:text-[3.5rem]">
+          Apprenticeship operations, <span class="text-orange-400">unified.</span>
+        </h1>
+        <p class="mt-5 max-w-md text-base leading-relaxed text-primary-100 lg:text-lg">
+          Streamlined daily workflows for coaches and live program health and insights.
+        </p>
+
+        <ul class="mt-8 flex flex-wrap gap-3" aria-label="Highlights">
+          <li class="glass inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium text-white">
+            <ap-icon name="calendar-check" [size]="16" class="text-orange-400" /> Instant check-ins
+          </li>
+          <li class="glass inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium text-white">
+            <ap-icon name="dashboard" [size]="16" class="text-orange-400" /> Cohort health
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Frosted sign-in card -->
+    <main class="w-full lg:justify-self-end">
+      <div
+        class="glass-strong w-full rounded-3xl p-6 sm:p-8 lg:max-w-[28rem] [animation:fade-up_480ms_var(--ease-out-quart)]"
+      >
+        <h2 class="text-2xl font-semibold text-white">Welcome back</h2>
+        <p class="mt-1 text-sm text-fg-muted">
+          @if (config.demoMode) {
+            Pick a demo persona to jump straight in.
+          } @else {
+            Sign in with your work email.
+          }
+        </p>
+
+        @if (config.demoMode) {
+          <ul class="mt-6 space-y-3" aria-label="Demo personas">
+            @for (p of personas(); track p.role) {
+              <li>
+                <button
+                  type="button"
+                  class="glass-tile group flex w-full items-center gap-4 rounded-2xl p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-orange-400/60 hover:bg-white/[0.09] disabled:pointer-events-none disabled:opacity-60"
+                  [disabled]="pending() !== null"
+                  [attr.aria-busy]="pending() === p.role"
+                  (click)="signInAs(p)"
+                >
+                  <ap-avatar [name]="p.user?.fullName ?? p.label" [seed]="p.user?.id ?? p.email" [size]="46" />
+                  <span class="min-w-0 flex-1">
+                    <span class="flex items-center gap-2">
+                      <span class="font-display text-base font-semibold text-white">{{ p.label }}</span>
+                      <span
+                        class="rounded-full px-2 py-0.5 text-[11px] font-semibold"
+                        [class]="p.role === 'ADMIN' ? 'bg-accent-soft text-accent' : 'bg-info-soft text-info'"
+                      >
+                        {{ p.role === 'ADMIN' ? 'Admin' : 'Coach' }}
+                      </span>
+                    </span>
+                    <span class="mt-0.5 block text-sm text-fg-muted">{{ p.user?.fullName }}</span>
+                    <span class="mt-1 block text-xs leading-relaxed text-fg-subtle">{{ p.blurb }}</span>
+                  </span>
+                  @if (pending() === p.role) {
+                    <span class="size-5 animate-spin rounded-full border-2 border-white/20 border-t-orange-400" aria-label="Signing in"></span>
+                  } @else {
+                    <ap-icon name="arrow-right" [size]="20" class="text-fg-subtle transition-transform group-hover:translate-x-1 group-hover:text-orange-400" />
+                  }
+                </button>
+              </li>
+            }
+          </ul>
+
+          <div class="my-6 flex items-center gap-3 text-xs font-medium uppercase tracking-wider text-fg-subtle">
+            <span class="h-px flex-1 bg-white/10"></span> or use email <span class="h-px flex-1 bg-white/10"></span>
+          </div>
+        }
+
+        <form [formGroup]="form" (ngSubmit)="signInWithEmail()" novalidate class="space-y-3">
+          <div>
+            <label for="email" class="mb-1.5 block text-sm font-medium text-white">Work email</label>
+            <div class="relative">
+              <ap-icon name="mail" [size]="18" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-fg-subtle" />
+              <input
+                id="email"
+                type="email"
+                formControlName="email"
+                autocomplete="email"
+                inputmode="email"
+                placeholder="name@apros.demo"
+                class="field border-white/10 pl-11"
+                [attr.aria-invalid]="form.controls.email.touched && form.controls.email.invalid"
+                aria-describedby="email-hint"
+              />
+            </div>
+            <p id="email-hint" class="mt-1.5 text-xs text-fg-subtle">
+              @if (form.controls.email.touched && form.controls.email.invalid) {
+                <span class="text-danger">Enter a valid email address.</span>
+              } @else if (config.demoMode) {
+                Any seeded staff email works, e.g. efua.mensah&#64;apros.demo
+              }
+            </p>
+          </div>
+          <button type="submit" class="btn btn-primary w-full" [disabled]="pending() !== null">
+            @if (pending() === 'email') {
+              <span class="size-4 animate-spin rounded-full border-2 border-primary-900/30 border-t-primary-900" aria-hidden="true"></span>
+              Signing in…
+            } @else {
+              Continue
+            }
+          </button>
+        </form>
+
+        @if (error(); as message) {
+          <p class="mt-4 flex items-start gap-2 rounded-xl bg-danger-soft px-3 py-2.5 text-sm text-danger" role="alert">
+            <ap-icon name="alert" [size]="16" class="mt-0.5" /> {{ message }}
+          </p>
+        }
+
+        @if (config.demoMode) {
+          <p class="mt-6 flex items-start gap-2 text-xs leading-relaxed text-fg-subtle">
+            <ap-icon name="shield" [size]="14" class="mt-0.5 shrink-0" />
+            Demo mode — no passwords, and all data stays in this browser. You can reset it anytime.
+          </p>
+        }
+      </div>
+    </main>
+  </div>
+</div>

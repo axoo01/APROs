@@ -1,0 +1,310 @@
+/*
+ * APROs design tokens.
+ * Source: AmaliTech "Unified Experience Design" Figma (Colors · Typography · Shadows).
+ * Layer 1 (@theme static): brand ramps — always emitted as CSS vars (needed for dynamic colorTags).
+ * Layer 2 (--ap-*): semantic roles, re-pointed for dark mode.
+ * Layer 3 (@theme inline): semantic roles exposed as Tailwind utilities (bg-surface, text-fg, …).
+ * Components use Layer 3 utilities (or Layer 1 for data-viz/tag colors). Never raw hex.
+ */
+
+@theme static {
+  --color-*: initial;
+  --color-white: #ffffff;
+  --color-black: #1a1a18;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  /* Brand — AmaliTech navy (Logo/Dark Blue = primary-500) */
+  --color-primary-50: #e6eaeb;
+  --color-primary-100: #b2bcc2;
+  --color-primary-200: #8d9ca5;
+  --color-primary-300: #5a6f7c;
+  --color-primary-400: #395362;
+  --color-primary-500: #08283b;
+  --color-primary-600: #072436;
+  --color-primary-700: #061c2a;
+  --color-primary-800: #041620;
+  --color-primary-900: #031119;
+
+  /* Brand — AmaliTech orange (Logo/Orange = orange-500) */
+  --color-orange-50: #ffefe6;
+  --color-orange-100: #ffccb0;
+  --color-orange-200: #ffb38a;
+  --color-orange-300: #ff9054;
+  --color-orange-400: #ff7b33;
+  --color-orange-500: #ff5a00;
+  --color-orange-600: #e85200;
+  --color-orange-700: #b54000;
+  --color-orange-800: #8c3200;
+  --color-orange-900: #6b2600;
+
+  /* Neutrals — Figma colors.coolGray */
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #f1f1f5;
+  --color-gray-300: #e2e2ea;
+  --color-gray-400: #d5d5dc;
+  --color-gray-500: #b5b5be;
+  --color-gray-600: #92929d;
+  --color-gray-700: #696974;
+  --color-gray-800: #44444f;
+  --color-gray-900: #171725;
+
+  --color-yellow-50: #fff9e6;
+  --color-yellow-100: #ffebb0;
+  --color-yellow-200: #ffe18a;
+  --color-yellow-300: #fed354;
+  --color-yellow-400: #fecb33;
+  --color-yellow-500: #febe00;
+  --color-yellow-600: #e7ad00;
+  --color-yellow-700: #b48700;
+  --color-yellow-800: #8c6900;
+  --color-yellow-900: #6b5000;
+
+  --color-light-blue-50: #eff7fe;
+  --color-light-blue-100: #cde6fc;
+  --color-light-blue-200: #b4dafb;
+  --color-light-blue-300: #92c9f9;
+  --color-light-blue-400: #7dbff8;
+  --color-light-blue-500: #5daff6;
+  --color-light-blue-600: #559fe0;
+  --color-light-blue-700: #427caf;
+  --color-light-blue-800: #336087;
+  --color-light-blue-900: #274a67;
+
+  --color-ultramarine-50: #e6e7f9;
+  --color-ultramarine-100: #b1b4eb;
+  --color-ultramarine-200: #8c90e2;
+  --color-ultramarine-300: #575dd4;
+  --color-ultramarine-400: #363dcc;
+  --color-ultramarine-500: #040dbf;
+  --color-ultramarine-600: #040cae;
+  --color-ultramarine-700: #030988;
+  --color-ultramarine-800: #020769;
+  --color-ultramarine-900: #020550;
+
+  --color-red-50: #fdf2f2;
+  --color-red-100: #fde8e8;
+  --color-red-200: #fbd5d5;
+  --color-red-300: #f8b4b4;
+  --color-red-400: #f98080;
+  --color-red-500: #f05252;
+  --color-red-600: #e02424;
+  --color-red-700: #c81e1e;
+  --color-red-800: #9b1c1c;
+  --color-red-900: #771d1d;
+
+  --color-green-50: #f3faf7;
+  --color-green-100: #def7ec;
+  --color-green-200: #bcf0da;
+  --color-green-300: #84e1bc;
+  --color-green-400: #31c48d;
+  --color-green-500: #0e9f6e;
+  --color-green-600: #057a55;
+  --color-green-700: #046c4e;
+  --color-green-800: #03543f;
+  --color-green-900: #014737;
+
+  --color-teal-50: #edfafa;
+  --color-teal-100: #d5f5f6;
+  --color-teal-200: #afecef;
+  --color-teal-300: #7edce2;
+  --color-teal-400: #16bdca;
+  --color-teal-500: #0694a2;
+  --color-teal-600: #047481;
+  --color-teal-700: #036672;
+  --color-teal-800: #05505c;
+  --color-teal-900: #014451;
+
+  --color-indigo-50: #f0f5ff;
+  --color-indigo-100: #e5edff;
+  --color-indigo-200: #cddbfe;
+  --color-indigo-300: #b4c6fc;
+  --color-indigo-400: #8da2fb;
+  --color-indigo-500: #6875f5;
+  --color-indigo-600: #5850ec;
+  --color-indigo-700: #5145cd;
+  --color-indigo-800: #42389d;
+  --color-indigo-900: #362f78;
+
+  --color-purple-50: #f6f5ff;
+  --color-purple-100: #edebfe;
+  --color-purple-200: #dcd7fe;
+  --color-purple-300: #cabffd;
+  --color-purple-400: #ac94fa;
+  --color-purple-500: #9061f9;
+  --color-purple-600: #7e3af2;
+  --color-purple-700: #6c2bd9;
+  --color-purple-800: #5521b5;
+  --color-purple-900: #4a1d96;
+
+  --color-pink-50: #fdf2f8;
+  --color-pink-100: #fce8f3;
+  --color-pink-200: #fad1e8;
+  --color-pink-300: #f8b4d9;
+  --color-pink-400: #f17eb8;
+  --color-pink-500: #e74694;
+  --color-pink-600: #d61f69;
+  --color-pink-700: #bf125d;
+  --color-pink-800: #99154b;
+  --color-pink-900: #751a3d;
+
+  /* Typography — Figma Typeface/Header + Typeface/Body */
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Poppins', 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+  /* Shape & elevation — Figma rounded-xl, shadow-sm */
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+  --radius-3xl: 24px;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.08);
+  --shadow-card: 0 1px 2px rgb(8 40 59 / 0.06), 0 8px 24px -12px rgb(8 40 59 / 0.18);
+  --shadow-float: 0 12px 40px -12px rgb(8 40 59 / 0.35);
+
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+/* ---------- Layer 2: semantic roles ---------- */
+:root {
+  color-scheme: light;
+  --ap-canvas: color-mix(in oklab, var(--color-primary-50) 38%, var(--color-white));
+  --ap-surface: var(--color-white);
+  --ap-surface-2: var(--color-gray-100);
+  --ap-glass: rgb(255 255 255 / 0.58);
+  --ap-glass-strong: rgb(255 255 255 / 0.7);
+  --ap-glass-line: rgb(255 255 255 / 0.65);
+  --ap-glass-highlight: rgb(255 255 255 / 0.7);
+  --ap-glass-shadow: 0 1px 1px rgb(8 40 59 / 0.04), 0 12px 32px -12px rgb(8 40 59 / 0.22);
+  /* Soft brand light behind the app so frosted layers have something to refract. */
+  --ap-ambient:
+    radial-gradient(60rem 40rem at 100% -10%, rgb(255 90 0 / 0.07), transparent 60%),
+    radial-gradient(50rem 40rem at -10% 110%, rgb(93 175 246 / 0.1), transparent 60%);
+  --ap-field-bg: var(--ap-surface);
+  --ap-line: var(--color-gray-300);
+  --ap-line-strong: var(--color-gray-500);
+  --ap-fg: #101828;
+  --ap-fg-muted: var(--color-gray-700);
+  --ap-fg-subtle: var(--color-gray-600);
+
+  --ap-action: var(--color-primary-500);
+  --ap-action-hover: var(--color-primary-400);
+  --ap-on-action: var(--color-white);
+  --ap-accent: var(--color-orange-500);
+  --ap-accent-soft: var(--color-orange-50);
+  --ap-focus: var(--color-orange-500);
+  --ap-brand-panel: var(--color-primary-500);
+
+  --ap-danger: var(--color-red-600);
+  --ap-danger-soft: var(--color-red-50);
+  --ap-warning: var(--color-yellow-700);
+  --ap-warning-soft: var(--color-yellow-50);
+  --ap-success: var(--color-green-600);
+  --ap-success-soft: var(--color-green-50);
+  --ap-info: var(--color-light-blue-800);
+  --ap-info-soft: var(--color-light-blue-50);
+
+  /* Attendance statuses — fill / text-on-fill / soft background */
+  --ap-status-p: var(--color-green-600);
+  --ap-on-status-p: var(--color-white);
+  --ap-status-p-soft: var(--color-green-50);
+  --ap-status-l: var(--color-yellow-500);
+  --ap-on-status-l: var(--color-primary-700);
+  --ap-status-l-soft: var(--color-yellow-50);
+  --ap-status-a: var(--color-red-600);
+  --ap-on-status-a: var(--color-white);
+  --ap-status-a-soft: var(--color-red-50);
+  --ap-status-e: var(--color-light-blue-800);
+  --ap-on-status-e: var(--color-white);
+  --ap-status-e-soft: var(--color-light-blue-50);
+}
+
+/* `.theme-dark` forces dark tokens on a subtree (e.g. the always-on-navy login), independent of the user theme. */
+:root.dark,
+.theme-dark {
+  color-scheme: dark;
+  --ap-canvas: var(--color-primary-900);
+  --ap-surface: var(--color-primary-700);
+  --ap-surface-2: var(--color-primary-600);
+  --ap-glass: rgb(6 28 42 / 0.55);
+  --ap-glass-strong: rgb(8 40 59 / 0.42);
+  --ap-glass-line: rgb(255 255 255 / 0.12);
+  --ap-glass-highlight: rgb(255 255 255 / 0.1);
+  --ap-glass-shadow: 0 1px 1px rgb(0 0 0 / 0.2), 0 24px 48px -16px rgb(0 0 0 / 0.55);
+  --ap-ambient:
+    radial-gradient(60rem 40rem at 100% -10%, rgb(255 90 0 / 0.1), transparent 60%),
+    radial-gradient(50rem 40rem at -10% 110%, rgb(93 175 246 / 0.08), transparent 60%);
+  --ap-field-bg: rgb(255 255 255 / 0.05);
+  --ap-line: rgb(141 156 165 / 0.22);
+  --ap-line-strong: var(--color-primary-300);
+  --ap-fg: #eef2f4;
+  --ap-fg-muted: var(--color-primary-100);
+  --ap-fg-subtle: var(--color-primary-200);
+
+  --ap-action: var(--color-orange-500);
+  --ap-action-hover: var(--color-orange-400);
+  --ap-on-action: var(--color-primary-900);
+  --ap-accent: var(--color-orange-400);
+  --ap-accent-soft: rgb(255 90 0 / 0.14);
+  --ap-focus: var(--color-orange-400);
+  --ap-brand-panel: var(--color-primary-800);
+
+  --ap-danger: var(--color-red-400);
+  --ap-danger-soft: rgb(240 82 82 / 0.14);
+  --ap-warning: var(--color-yellow-400);
+  --ap-warning-soft: rgb(254 190 0 / 0.12);
+  --ap-success: var(--color-green-400);
+  --ap-success-soft: rgb(14 159 110 / 0.14);
+  --ap-info: var(--color-light-blue-400);
+  --ap-info-soft: rgb(93 175 246 / 0.14);
+
+  --ap-status-p: var(--color-green-500);
+  --ap-status-p-soft: rgb(14 159 110 / 0.16);
+  --ap-status-l-soft: rgb(254 190 0 / 0.14);
+  --ap-status-a: var(--color-red-500);
+  --ap-status-a-soft: rgb(240 82 82 / 0.16);
+  --ap-status-e: var(--color-light-blue-600);
+  --ap-on-status-e: var(--color-primary-900);
+  --ap-status-e-soft: rgb(93 175 246 / 0.16);
+}
+
+/* ---------- Layer 3: semantic utilities ---------- */
+@theme inline {
+  --color-canvas: var(--ap-canvas);
+  --color-surface: var(--ap-surface);
+  --color-surface-2: var(--ap-surface-2);
+  --color-glass: var(--ap-glass);
+  --color-glass-line: var(--ap-glass-line);
+  --color-line: var(--ap-line);
+  --color-line-strong: var(--ap-line-strong);
+  --color-fg: var(--ap-fg);
+  --color-fg-muted: var(--ap-fg-muted);
+  --color-fg-subtle: var(--ap-fg-subtle);
+  --color-action: var(--ap-action);
+  --color-action-hover: var(--ap-action-hover);
+  --color-on-action: var(--ap-on-action);
+  --color-accent: var(--ap-accent);
+  --color-accent-soft: var(--ap-accent-soft);
+  --color-focus: var(--ap-focus);
+  --color-brand-panel: var(--ap-brand-panel);
+  --color-danger: var(--ap-danger);
+  --color-danger-soft: var(--ap-danger-soft);
+  --color-warning: var(--ap-warning);
+  --color-warning-soft: var(--ap-warning-soft);
+  --color-success: var(--ap-success);
+  --color-success-soft: var(--ap-success-soft);
+  --color-info: var(--ap-info);
+  --color-info-soft: var(--ap-info-soft);
+  --color-status-p: var(--ap-status-p);
+  --color-on-status-p: var(--ap-on-status-p);
+  --color-status-p-soft: var(--ap-status-p-soft);
+  --color-status-l: var(--ap-status-l);
+  --color-on-status-l: var(--ap-on-status-l);
+  --color-status-l-soft: var(--ap-status-l-soft);
+  --color-status-a: var(--ap-status-a);
+  --color-on-status-a: var(--ap-on-status-a);
+  --color-status-a-soft: var(--ap-status-a-soft);
+  --color-status-e: var(--ap-status-e);
+  --color-on-status-e: var(--ap-on-status-e);
+  --color-status-e-soft: var(--ap-status-e-soft);
+}

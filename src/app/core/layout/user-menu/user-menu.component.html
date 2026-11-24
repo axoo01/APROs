@@ -1,0 +1,90 @@
+<div class="relative" (apClickOutside)="open.set(false)" [apClickOutsideEnabled]="open()">
+  <button
+    #trigger
+    type="button"
+    class="flex min-h-11 items-center gap-2.5 rounded-xl p-1 pr-1 transition-colors hover:bg-surface-2 lg:pr-3"
+    aria-haspopup="menu"
+    [attr.aria-expanded]="open()"
+    aria-controls="user-menu"
+    (click)="toggle()"
+  >
+    <ap-avatar [name]="session()?.fullName ?? ''" [seed]="session()?.userId ?? ''" [size]="36" />
+    <span class="hidden text-left lg:block">
+      <span class="block text-sm font-semibold leading-tight">{{ session()?.fullName }}</span>
+      <span class="block text-xs text-fg-subtle">{{ title() }}</span>
+    </span>
+    <span class="sr-only">Open profile menu</span>
+  </button>
+
+  @if (open()) {
+    <div
+      id="user-menu"
+      role="menu"
+      aria-label="Profile"
+      #menu
+      tabindex="-1"
+      class="glass absolute right-0 top-full z-50 mt-2 w-72 rounded-2xl border p-2 shadow-[var(--shadow-float)] outline-none [animation:menu-in_160ms_var(--ease-out-quart)]"
+      (keydown)="onMenuKey($event)"
+    >
+      <div class="flex items-center gap-3 px-3 py-3">
+        <ap-avatar [name]="session()?.fullName ?? ''" [seed]="session()?.userId ?? ''" [size]="40" />
+        <div class="min-w-0">
+          <p class="truncate text-sm font-semibold">{{ session()?.fullName }}</p>
+          <p class="truncate text-xs text-fg-subtle">{{ session()?.email }}</p>
+          <span class="mt-1 inline-flex rounded-full bg-accent-soft px-2 py-0.5 text-[11px] font-semibold text-accent">
+            {{ roleLabel() }}
+          </span>
+        </div>
+      </div>
+
+      <div class="my-1 h-px bg-line" role="separator"></div>
+
+      @if (config.demoMode) {
+        <button type="button" role="menuitem" class="menu-item" (click)="switchRole()">
+          <ap-icon name="repeat" [size]="18" />
+          <span class="flex-1">Switch to {{ otherRoleLabel() }}</span>
+          <span class="text-[11px] font-medium text-fg-subtle">Demo</span>
+        </button>
+      }
+
+      <div class="px-3 py-2">
+        <p class="mb-2 text-xs font-medium text-fg-subtle" id="theme-label">Theme</p>
+        <div class="grid grid-cols-3 gap-1 rounded-xl bg-surface-2 p-1" role="radiogroup" aria-labelledby="theme-label">
+          @for (opt of themeOptions; track opt.value) {
+            <button
+              type="button"
+              role="radio"
+              [attr.aria-checked]="theme.preference() === opt.value"
+              class="flex h-8 items-center justify-center gap-1.5 rounded-lg text-xs font-medium text-fg-muted transition-all aria-checked:bg-surface aria-checked:text-fg aria-checked:shadow-sm"
+              (click)="theme.set(opt.value)"
+            >
+              <ap-icon [name]="opt.icon" [size]="14" /> {{ opt.label }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="my-1 h-px bg-line" role="separator"></div>
+
+      @if (config.demoMode) {
+        <button type="button" role="menuitem" class="menu-item" (click)="confirmReset.set(true); open.set(false)">
+          <ap-icon name="refresh" [size]="18" /> Reset demo data
+        </button>
+      }
+      <button type="button" role="menuitem" class="menu-item text-danger" (click)="logout()">
+        <ap-icon name="log-out" [size]="18" /> Sign out
+      </button>
+    </div>
+  }
+</div>
+
+<ap-confirm-dialog
+  [(open)]="confirmReset"
+  title="Reset demo data?"
+  confirmLabel="Reset data"
+  tone="danger"
+  (confirmed)="reset()"
+>
+  This restores the original pre-seeded cohorts, apprentices and attendance history. Any changes made in this
+  browser will be lost.
+</ap-confirm-dialog>

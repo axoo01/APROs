@@ -1,0 +1,87 @@
+<ap-page-header eyebrow="Cohort health" title="Dashboard" [subtitle]="(f.cohort()?.displayName ?? '') + ' · cohort to date'" />
+
+<section aria-label="Key metrics" class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+  <div class="card p-5">
+    <p class="text-sm text-fg-muted">Active apprentices</p>
+    <p class="mt-2 font-display text-3xl font-semibold tabular-nums">{{ f.activeCount() }}</p>
+    <p class="mt-1 text-xs text-fg-subtle">{{ f.unassignedCount() }} unassigned</p>
+  </div>
+  <div class="card p-5">
+    <p class="text-sm text-fg-muted">Attendance rate</p>
+    <p class="mt-2 font-display text-3xl font-semibold tabular-nums">{{ f.summary().attendanceRate | percent: '1.0-1' }}</p>
+    <p class="mt-1 text-xs text-fg-subtle">(P + L) ÷ (P + L + A)</p>
+  </div>
+  <div class="card p-5">
+    <p class="text-sm text-fg-muted">Punctuality rate</p>
+    <p class="mt-2 font-display text-3xl font-semibold tabular-nums">{{ f.summary().punctualityRate | percent: '1.0-1' }}</p>
+    <p class="mt-1 text-xs text-fg-subtle">P ÷ (P + L)</p>
+  </div>
+  <div class="card p-5">
+    <p class="text-sm text-fg-muted">Excused days</p>
+    <p class="mt-2 font-display text-3xl font-semibold tabular-nums">{{ f.summary().E }}</p>
+    <p class="mt-1 text-xs text-fg-subtle">Neutral · {{ f.daysRecorded() }} days recorded</p>
+  </div>
+</section>
+
+<div class="mt-6 grid gap-6 lg:grid-cols-5">
+  <section class="card p-5 lg:col-span-3" aria-labelledby="spec-heading">
+    <h2 id="spec-heading" class="font-semibold">By specialization</h2>
+    <ul class="mt-4 space-y-4">
+      @for (g of f.bySpecialization(); track g.specialization!.id) {
+        <li>
+          <div class="flex items-center justify-between gap-3 text-sm">
+            <span class="flex min-w-0 items-center gap-2">
+              <span class="size-2.5 shrink-0 rounded-full" [style.background-color]="tag(g.specialization!.colorTag)"></span>
+              <span class="truncate">{{ g.specialization!.name }}</span>
+            </span>
+            <span class="shrink-0 tabular-nums text-fg-muted">
+              <span class="font-semibold text-fg">{{ g.summary.attendanceRate | percent: '1.0-0' }}</span>
+              · on time {{ g.summary.punctualityRate | percent: '1.0-0' }}
+            </span>
+          </div>
+          <div
+            class="mt-2 h-2 overflow-hidden rounded-full bg-surface-2"
+            role="meter"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            [attr.aria-valuenow]="round(g.summary.attendanceRate * 100)"
+            [attr.aria-label]="g.specialization!.name + ' attendance rate'"
+          >
+            <div
+              class="h-full rounded-full transition-[width] duration-700 ease-[var(--ease-out-quart)]"
+              [style.width.%]="g.summary.attendanceRate * 100"
+              [style.background-color]="tag(g.specialization!.colorTag)"
+            ></div>
+          </div>
+        </li>
+      } @empty {
+        <li class="text-sm text-fg-muted">No attendance recorded yet for this cohort.</li>
+      }
+    </ul>
+  </section>
+
+  <section class="card p-5 lg:col-span-2" aria-labelledby="risk-heading">
+    <h2 id="risk-heading" class="flex items-center gap-2 font-semibold">
+      <ap-icon name="alert" [size]="18" class="text-warning" /> Needs attention
+    </h2>
+    <p class="mt-1 text-xs text-fg-subtle">Attendance below 85% (excused days excluded)</p>
+    <ul class="mt-4 divide-y divide-line">
+      @for (r of f.atRisk(); track r.apprentice.id) {
+        <li class="flex items-center gap-3 py-3">
+          <ap-avatar [name]="r.name" [seed]="r.apprentice.id" [size]="36" />
+          <div class="min-w-0 flex-1">
+            <p class="truncate text-sm font-medium">{{ r.name }}</p>
+            <p class="text-xs text-fg-subtle">
+              {{ r.specialization?.code }} · {{ r.summary.A }} absent · {{ r.summary.L }} late
+            </p>
+          </div>
+          <span class="rounded-full bg-status-a-soft px-2 py-0.5 text-xs font-semibold tabular-nums text-status-a">
+            {{ r.summary.attendanceRate | percent: '1.0-0' }}
+          </span>
+        </li>
+      } @empty {
+        <li class="py-6 text-center text-sm text-fg-muted">Everyone is above the threshold. 🎉</li>
+      }
+    </ul>
+  </section>
+</div>

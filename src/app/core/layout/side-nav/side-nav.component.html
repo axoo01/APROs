@@ -1,0 +1,37 @@
+<div class="flex h-20 items-center gap-3 px-6">
+  <ap-logo [size]="17" class="text-white" />
+</div>
+<p class="px-6 pb-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary-200">
+  Apprenticeship Ops
+</p>
+
+<nav aria-label="Primary" class="flex-1 px-3">
+  <ul class="space-y-1">
+    @for (item of nav.items(); track item.path) {
+      <li>
+        <a
+          [routerLink]="item.path"
+          routerLinkActive="is-active"
+          ariaCurrentWhenActive="page"
+          class="group relative flex h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium text-primary-100 transition-colors hover:bg-white/5 hover:text-white [&.is-active]:bg-white/10 [&.is-active]:text-white"
+        >
+          <span
+            class="absolute inset-y-2 left-0 w-1 scale-y-0 rounded-full bg-orange-500 transition-transform duration-200 group-[.is-active]:scale-y-100"
+            aria-hidden="true"
+          ></span>
+          <ap-icon [name]="item.icon" [size]="19" />
+          {{ item.label }}
+        </a>
+      </li>
+    }
+  </ul>
+</nav>
+
+@if (config.demoMode) {
+  <div class="m-4 rounded-2xl bg-white/5 p-4 text-xs text-primary-100 ring-1 ring-white/10">
+    <p class="flex items-center gap-2 font-semibold text-white">
+      <span class="size-2 rounded-full bg-orange-500"></span> Demo mode
+    </p>
+    <p class="mt-1 leading-relaxed">Data lives in this browser. Reset anytime from your profile menu.</p>
+  </div>
+}

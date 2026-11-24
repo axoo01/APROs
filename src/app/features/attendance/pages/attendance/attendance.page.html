@@ -1,0 +1,55 @@
+<ap-page-header
+  eyebrow="Daily attendance"
+  title="Today"
+  [subtitle]="(facade.date() | date: 'EEEE, d MMMM') + ' · ' + (facade.cohort()?.displayName ?? '')"
+/>
+
+@if (facade.dateCheck(); as check) {
+  @if (check.allowed && check.warning) {
+    <p class="mb-5 flex items-center gap-2 rounded-xl bg-warning-soft px-4 py-3 text-sm text-warning" role="note">
+      <ap-icon name="info" [size]="16" />
+      Today is a {{ check.warning === 'WEEKEND' ? 'weekend' : 'holiday' }} — recording is allowed in Demo Mode.
+    </p>
+  }
+}
+
+<section aria-labelledby="buckets-heading">
+  <h2 id="buckets-heading" class="sr-only">Today's buckets</h2>
+  <ul class="grid grid-cols-3 gap-3" aria-live="polite">
+    @for (b of bucketList(); track b.key) {
+      <li class="card p-4">
+        <span class="inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold" [class]="b.style">{{ b.label }}</span>
+        <p class="mt-3 font-display text-3xl font-semibold tabular-nums">{{ b.count }}</p>
+      </li>
+    }
+  </ul>
+</section>
+
+<section class="card mt-6 overflow-hidden" aria-labelledby="sweep-heading">
+  <div class="flex flex-col gap-4 p-6 sm:flex-row sm:items-center">
+    <span class="grid size-12 shrink-0 place-items-center rounded-2xl bg-accent-soft text-accent">
+      <ap-icon name="calendar-check" [size]="24" />
+    </span>
+    <div class="flex-1">
+      <h2 id="sweep-heading" class="font-semibold">Sweep &amp; Reveal is next</h2>
+      <p class="mt-1 text-sm text-fg-muted">
+        Tap faces you see to mark them Present, double-tap for Late, then close out the day with
+        <span class="font-medium text-fg">Mark Remaining as Absent</span>. Arriving in Milestone 1 · Step 2.
+      </p>
+    </div>
+  </div>
+  <div class="border-t border-line bg-surface-2/60 px-6 py-4">
+    <p class="text-xs font-semibold uppercase tracking-wider text-fg-subtle">Roster by specialization</p>
+    <ul class="mt-3 flex flex-wrap gap-2">
+      @for (g of facade.bySpecialization(); track g.specialization!.id) {
+        <li
+          class="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3 py-1.5 text-sm"
+        >
+          <span class="size-2.5 rounded-full" [style.background-color]="tagColor(g.specialization!.colorTag)"></span>
+          {{ g.specialization!.name }}
+          <span class="font-semibold tabular-nums text-fg-muted">{{ g.count }}</span>
+        </li>
+      }
+    </ul>
+  </div>
+</section>

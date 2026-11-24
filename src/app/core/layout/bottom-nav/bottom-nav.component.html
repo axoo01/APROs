@@ -1,0 +1,21 @@
+<nav aria-label="Primary" class="glass border-t pb-safe">
+  <ul class="mx-auto flex max-w-lg items-stretch justify-around px-2">
+    @for (item of nav.items(); track item.path) {
+      <li class="flex-1">
+        <a
+          [routerLink]="item.path"
+          routerLinkActive="is-active"
+          ariaCurrentWhenActive="page"
+          class="group flex h-16 flex-col items-center justify-center gap-1 text-[11px] font-medium text-fg-subtle transition-colors [&.is-active]:text-fg"
+        >
+          <span
+            class="flex h-7 w-12 items-center justify-center rounded-full transition-all duration-200 group-[.is-active]:bg-accent-soft group-[.is-active]:text-accent"
+          >
+            <ap-icon [name]="item.icon" [size]="20" />
+          </span>
+          {{ item.label }}
+        </a>
+      </li>
+    }
+  </ul>
+</nav>
