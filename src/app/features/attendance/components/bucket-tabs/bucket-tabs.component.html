@@ -1,0 +1,33 @@
+<div role="tablist" aria-label="Attendance buckets" class="grid grid-cols-3 gap-1.5 sm:gap-2">
+  @for (t of tabs(); track t.key) {
+    <button
+      type="button"
+      role="tab"
+      [id]="tabId(t.key)"
+      [attr.aria-selected]="active() === t.key"
+      [attr.aria-controls]="panelId()"
+      [tabindex]="active() === t.key ? 0 : -1"
+      class="flex min-h-[4.75rem] flex-col items-start justify-between rounded-xl px-3 py-2.5 text-left transition-[background-color,color,box-shadow,transform] duration-200 active:scale-[0.98] sm:px-4"
+      [class]="active() === t.key ? t.active + ' shadow-[var(--shadow-float)]' : 'text-fg hover:bg-surface-2/70'"
+      (click)="active.set(t.key)"
+      (keydown)="onKey($event)"
+    >
+      <span class="flex w-full items-center gap-1.5 text-[11px] font-semibold leading-tight sm:text-xs">
+        <span
+          class="size-2 shrink-0 rounded-full"
+          [class]="active() === t.key ? 'bg-current opacity-80' : t.dot"
+          aria-hidden="true"
+        ></span>
+        <span class="truncate">{{ t.label }}</span>
+      </span>
+      <span class="flex w-full items-baseline justify-between gap-2">
+        <span class="font-display text-2xl font-semibold tabular-nums leading-none sm:text-[1.75rem]">{{ t.count }}</span>
+        <span
+          class="hidden truncate text-[11px] tabular-nums sm:inline"
+          [class]="active() === t.key ? 'opacity-80' : 'text-fg-muted'"
+          >{{ t.hint }}</span
+        >
+      </span>
+    </button>
+  }
+</div>

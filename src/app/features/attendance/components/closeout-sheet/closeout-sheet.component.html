@@ -1,0 +1,65 @@
+<!-- Backdrop click closes (pointer convenience); Esc is the native keyboard path. -->
+<!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+<dialog
+  #dialog
+  class="sheet sm:max-w-lg"
+  aria-labelledby="closeout-title"
+  aria-describedby="closeout-desc"
+  (close)="open.set(false)"
+  (click)="onBackdrop($event)"
+>
+  <div class="flex max-h-[92dvh] flex-col">
+    <header class="flex items-start gap-3 p-5 pb-3 sm:p-6 sm:pb-3">
+      <span class="grid size-11 shrink-0 place-items-center rounded-2xl bg-status-a-soft text-status-a">
+        <ap-icon name="user-x" [size]="22" />
+      </span>
+      <div class="min-w-0 flex-1">
+        <h2 id="closeout-title" class="text-lg font-semibold">Mark {{ markCount() }} as Absent?</h2>
+        <p id="closeout-desc" class="mt-1 text-sm text-fg-muted">
+          They haven't been marked today. Tap anyone who's still on their way to keep them as Not Here Yet.
+        </p>
+      </div>
+    </header>
+
+    <div class="min-h-0 flex-1 overflow-y-auto px-5 sm:px-6">
+      @for (g of groups(); track g.specialization?.id ?? 'none') {
+        <section class="py-2">
+          <h3 class="flex items-center gap-2 py-1 text-xs font-semibold uppercase tracking-wider text-fg-subtle">
+            @if (g.specialization; as s) {
+              <span class="size-2 rounded-full" [style.background-color]="tagColor(s.colorTag)" aria-hidden="true"></span>
+              {{ s.name }}
+            } @else {
+              No specialization
+            }
+          </h3>
+          <ul class="flex flex-wrap gap-2 py-1">
+            @for (e of g.entries; track e.id) {
+              <li>
+                <button
+                  type="button"
+                  class="inline-flex min-h-11 items-center gap-2 rounded-full border px-3.5 text-sm font-medium transition-colors"
+                  [class]="excluded().has(e.id) ? 'border-dashed border-line-strong text-fg-subtle line-through' : 'border-transparent bg-status-a-soft text-status-a'"
+                  [attr.aria-pressed]="!excluded().has(e.id)"
+                  [attr.aria-label]="e.name + (excluded().has(e.id) ? ', kept as not here yet' : ', will be marked absent')"
+                  (click)="toggle(e.id)"
+                >
+                  <ap-icon [name]="excluded().has(e.id) ? 'clock' : 'x'" [size]="14" />
+                  {{ e.name }}
+                </button>
+              </li>
+            }
+          </ul>
+        </section>
+      }
+    </div>
+
+    <footer
+      class="flex flex-col-reverse gap-2 border-t border-line p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:flex-row sm:justify-end sm:p-6"
+    >
+      <button type="button" class="btn btn-secondary" (click)="open.set(false)">Keep sweeping</button>
+      <button type="button" class="btn btn-danger" [disabled]="markCount() === 0" (click)="confirm()">
+        Mark {{ markCount() }} Absent
+      </button>
+    </footer>
+  </div>
+</dialog>

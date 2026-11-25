@@ -1,0 +1,5 @@
+.segment {
+  transition:
+    stroke-dasharray 500ms var(--ease-out-quart),
+    stroke-dashoffset 500ms var(--ease-out-quart);
+}

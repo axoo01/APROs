@@ -1,0 +1,32 @@
+:host {
+  display: block;
+}
+
+.card-pop {
+  animation: card-pop 260ms var(--ease-spring);
+}
+
+.badge-pop {
+  animation: badge-pop 320ms var(--ease-spring);
+}
+
+@keyframes card-pop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(0.97);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes badge-pop {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
+  }
+}

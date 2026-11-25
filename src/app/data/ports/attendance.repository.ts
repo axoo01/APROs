@@ -11,4 +11,6 @@ export abstract class AttendanceRepository {
   abstract upsertMany(inputs: readonly UpsertAttendanceInput[]): Observable<readonly AttendanceRecord[]>;
   /** Removes the day's record → apprentice returns to "Not Here Yet" (used by undo). */
   abstract clear(apprenticeId: Id, date: IsoDate): Observable<void>;
+  /** Atomic batch clear (e.g. undoing "Mark remaining as Absent"). */
+  abstract clearMany(apprenticeIds: readonly Id[], date: IsoDate): Observable<void>;
 }

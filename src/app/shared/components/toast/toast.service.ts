@@ -31,6 +31,9 @@ export class ToastService {
   private readonly _toasts = signal<readonly Toast[]>([]);
   readonly toasts = this._toasts.asReadonly();
 
+  /** Extra bottom clearance (px) while a screen docks a bar above the bottom nav (e.g. attendance closeout). */
+  readonly bottomInset = signal(0);
+
   show(opts: ToastOptions): number {
     const id = ++this.seq;
     const toast: Toast = { id, tone: opts.tone ?? 'info', message: opts.message, action: opts.action ?? null };

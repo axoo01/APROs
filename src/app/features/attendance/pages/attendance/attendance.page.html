@@ -1,55 +1,165 @@
-<ap-page-header
-  eyebrow="Daily attendance"
-  title="Today"
-  [subtitle]="(facade.date() | date: 'EEEE, d MMMM') + ' · ' + (facade.cohort()?.displayName ?? '')"
+<div class="xl:grid xl:grid-cols-[minmax(0,1fr)_19rem] xl:items-start xl:gap-8">
+  <div class="min-w-0">
+    <ap-page-header
+      eyebrow="Daily attendance"
+      title="Today's sweep"
+      [subtitle]="(f.date() | date: 'EEEE, d MMMM') + ' · ' + (f.cohort()?.displayName ?? '')"
+    >
+      @if (f.canUndo()) {
+        <button type="button" class="btn btn-ghost hidden sm:inline-flex xl:hidden" (click)="f.undoLast()">
+          <ap-icon name="undo" [size]="16" /> Undo
+        </button>
+      }
+    </ap-page-header>
+
+    @if (f.dateCheck(); as check) {
+      @if (!check.allowed) {
+        <p class="mt-4 flex items-start gap-2 rounded-xl bg-danger-soft px-4 py-3 text-sm text-danger" role="alert">
+          <ap-icon name="alert" [size]="16" class="mt-0.5" />
+          Today is a {{ check.reason === 'WEEKEND' ? 'weekend' : 'holiday' }} for this cohort — attendance can't be recorded.
+        </p>
+      } @else if (check.warning) {
+        <p class="mt-4 flex items-start gap-2 rounded-xl bg-warning-soft px-4 py-3 text-sm text-warning" role="note">
+          <ap-icon name="info" [size]="16" class="mt-0.5" />
+          Today is a {{ check.warning === 'WEEKEND' ? 'weekend' : 'holiday' }} — recording is allowed in Demo Mode.
+        </p>
+      }
+    }
+
+    <!-- Floating glass island: tabs + progress stay in reach while the list scrolls. -->
+    <div
+      class="glass sticky top-[calc(4.5rem+env(safe-area-inset-top))] z-20 mt-4 overflow-hidden rounded-2xl border p-1.5 lg:top-[5.25rem]"
+    >
+      <ap-bucket-tabs
+        [counts]="f.counts()"
+        [summary]="f.summary()"
+        [panelId]="panelId"
+        [(active)]="f.activeBucket"
+      />
+      <div
+        class="mx-1.5 mt-1.5 h-1 overflow-hidden rounded-full bg-surface-2"
+        role="progressbar"
+        aria-label="Sweep progress"
+        [attr.aria-valuenow]="f.swept()"
+        aria-valuemin="0"
+        [attr.aria-valuemax]="f.total()"
+      >
+        <div
+          class="h-full rounded-full bg-status-p transition-[width] duration-500 ease-[var(--ease-out-quart)]"
+          [style.width.%]="f.progress() * 100"
+        ></div>
+      </div>
+    </div>
+    <p class="sr-only" aria-live="polite" aria-atomic="true">{{ liveSummary() }}</p>
+
+    <ap-sweep-filter-bar
+      class="mt-4 block"
+      [chips]="f.specializationChips()"
+      [search]="f.searchText()"
+      [(spec)]="f.specFilter"
+      [(coach)]="f.coachFilter"
+      (searchChange)="f.setSearch($event)"
+    />
+
+    <section
+      #list
+      [id]="panelId"
+      role="tabpanel"
+      [attr.aria-labelledby]="'bucket-tab-' + f.activeBucket()"
+      class="mt-2 outline-none"
+      (keydown)="onListKey($event)"
+    >
+      @if (showSummary()) {
+        <div class="mt-4">
+          <ap-day-summary
+            [summary]="f.summary()"
+            [scopeLabel]="f.scopeLabel()"
+            (copyReport)="copyReport()"
+            (reviewExceptions)="f.activeBucket.set('ABSENT_EXCUSED')"
+            (reviewPresent)="f.activeBucket.set('PRESENT')"
+          />
+        </div>
+      } @else if (f.visibleCount() === 0) {
+        <div class="mt-4 flex flex-col items-center rounded-2xl border border-dashed border-line px-6 py-12 text-center">
+          <span class="grid size-12 place-items-center rounded-2xl bg-surface-2 text-fg-subtle">
+            <ap-icon [name]="f.total() === 0 ? 'users' : 'search'" [size]="22" />
+          </span>
+          @if (f.total() === 0) {
+            <p class="mt-3 font-semibold">No apprentices in this scope</p>
+            <p class="mt-1 max-w-sm text-sm text-fg-muted">Clear the specialization or coach filter to see the whole cohort.</p>
+          } @else {
+            <p class="mt-3 font-semibold">{{ emptyCopy[f.activeBucket()].title }}</p>
+            <p class="mt-1 max-w-sm text-sm text-fg-muted">{{ emptyCopy[f.activeBucket()].body }}</p>
+          }
+        </div>
+      } @else {
+        @for (g of f.groups(); track g.specialization?.id ?? 'none') {
+          <section class="mt-5" [attr.aria-label]="(g.specialization?.name ?? 'No specialization') + ', ' + g.entries.length">
+            <h3 class="flex items-center gap-2 px-1 text-xs font-semibold uppercase tracking-wider text-fg-subtle">
+              @if (g.specialization; as s) {
+                <span class="size-2 rounded-full" [style.background-color]="tagColor(s.colorTag)" aria-hidden="true"></span>
+                {{ s.name }}
+              } @else {
+                No specialization
+              }
+              <span class="tabular-nums text-fg-subtle/80">· {{ g.entries.length }}</span>
+            </h3>
+            <ul class="mt-2.5 grid gap-2.5 sm:grid-cols-2 2xl:grid-cols-3">
+              @for (e of g.entries; track e.id) {
+                <li
+                  [attr.data-revealing]="e.revealing"
+                  animate.enter="sweep-enter"
+                  (animate.leave)="onCardLeave($event)"
+                >
+                  <ap-apprentice-card
+                    [entry]="e"
+                    [disabled]="!f.canRecord()"
+                    (tapped)="onTap(e, $event)"
+                    (details)="openDetails(e.id)"
+                    (quickStatus)="onQuickStatus(e, $event)"
+                  />
+                </li>
+              }
+            </ul>
+          </section>
+        }
+      }
+    </section>
+
+    @if (showCloseout()) {
+      <div
+        class="sticky bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-20 mt-6 [animation:fade-up_240ms_var(--ease-out-quart)] lg:bottom-6"
+      >
+        <ap-closeout-bar
+          [remaining]="f.remaining().length"
+          [total]="f.total()"
+          (closeout)="closeoutOpen.set(true)"
+        />
+      </div>
+    }
+  </div>
+
+  <div class="sticky top-[6.25rem] hidden xl:block">
+    <ap-day-pulse
+      [summary]="f.summary()"
+      [swept]="f.swept()"
+      [total]="f.total()"
+      [recent]="f.recentActivity()"
+      (undo)="f.undo($event)"
+    />
+  </div>
+</div>
+
+<ap-status-drawer
+  [entry]="detailsEntry()"
+  [preset]="details()?.preset ?? null"
+  (save)="onDetailsSave($event)"
+  (cleared)="onDetailsReset()"
+  (closed)="details.set(null)"
 />
 
-@if (facade.dateCheck(); as check) {
-  @if (check.allowed && check.warning) {
-    <p class="mb-5 flex items-center gap-2 rounded-xl bg-warning-soft px-4 py-3 text-sm text-warning" role="note">
-      <ap-icon name="info" [size]="16" />
-      Today is a {{ check.warning === 'WEEKEND' ? 'weekend' : 'holiday' }} — recording is allowed in Demo Mode.
-    </p>
-  }
-}
-
-<section aria-labelledby="buckets-heading">
-  <h2 id="buckets-heading" class="sr-only">Today's buckets</h2>
-  <ul class="grid grid-cols-3 gap-3" aria-live="polite">
-    @for (b of bucketList(); track b.key) {
-      <li class="card p-4">
-        <span class="inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold" [class]="b.style">{{ b.label }}</span>
-        <p class="mt-3 font-display text-3xl font-semibold tabular-nums">{{ b.count }}</p>
-      </li>
-    }
-  </ul>
-</section>
-
-<section class="card mt-6 overflow-hidden" aria-labelledby="sweep-heading">
-  <div class="flex flex-col gap-4 p-6 sm:flex-row sm:items-center">
-    <span class="grid size-12 shrink-0 place-items-center rounded-2xl bg-accent-soft text-accent">
-      <ap-icon name="calendar-check" [size]="24" />
-    </span>
-    <div class="flex-1">
-      <h2 id="sweep-heading" class="font-semibold">Sweep &amp; Reveal is next</h2>
-      <p class="mt-1 text-sm text-fg-muted">
-        Tap faces you see to mark them Present, double-tap for Late, then close out the day with
-        <span class="font-medium text-fg">Mark Remaining as Absent</span>. Arriving in Milestone 1 · Step 2.
-      </p>
-    </div>
-  </div>
-  <div class="border-t border-line bg-surface-2/60 px-6 py-4">
-    <p class="text-xs font-semibold uppercase tracking-wider text-fg-subtle">Roster by specialization</p>
-    <ul class="mt-3 flex flex-wrap gap-2">
-      @for (g of facade.bySpecialization(); track g.specialization!.id) {
-        <li
-          class="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3 py-1.5 text-sm"
-        >
-          <span class="size-2.5 rounded-full" [style.background-color]="tagColor(g.specialization!.colorTag)"></span>
-          {{ g.specialization!.name }}
-          <span class="font-semibold tabular-nums text-fg-muted">{{ g.count }}</span>
-        </li>
-      }
-    </ul>
-  </div>
-</section>
+<ap-closeout-sheet
+  [entries]="f.remaining()"
+  [(open)]="closeoutOpen"
+  (confirmed)="f.closeoutRemaining($event)"
+/>

@@ -1,0 +1,76 @@
+<aside class="flex flex-col gap-4" aria-label="Day pulse">
+  <section class="card p-5">
+    <h2 class="text-xs font-semibold uppercase tracking-wider text-fg-subtle">Day pulse</h2>
+    <div class="mt-4 flex items-center gap-4">
+      <ap-status-donut [tally]="summary()" [of]="total()" [size]="96" [thickness]="12">
+        <p class="font-display text-lg font-semibold tabular-nums leading-none">
+          {{ total() === 0 ? 0 : swept() / total() | percent }}
+        </p>
+      </ap-status-donut>
+      <div class="min-w-0">
+        <p class="font-display text-2xl font-semibold tabular-nums leading-tight">
+          {{ swept() }}<span class="text-base text-fg-subtle"> / {{ total() }}</span>
+        </p>
+        <p class="text-xs text-fg-muted">swept today</p>
+        <p class="mt-2 text-xs text-fg-muted">
+          Attendance <span class="font-semibold text-fg tabular-nums">{{ summary().attendanceRate | percent }}</span>
+          · Punctuality <span class="font-semibold text-fg tabular-nums">{{ summary().punctualityRate | percent }}</span>
+        </p>
+      </div>
+    </div>
+    <dl class="mt-4 grid grid-cols-4 gap-1.5">
+      @for (r of rows(); track r.key) {
+        <div class="rounded-lg px-2 py-1.5 text-center" [class]="r.tone">
+          <dt class="text-[10px] font-semibold">{{ r.key }}</dt>
+          <dd class="font-display text-base font-semibold tabular-nums" [attr.aria-label]="r.label + ' ' + r.count">
+            {{ r.count }}
+          </dd>
+        </div>
+      }
+    </dl>
+  </section>
+
+  <section class="card p-5">
+    <h2 class="text-xs font-semibold uppercase tracking-wider text-fg-subtle">Recent</h2>
+    @if (recent().length) {
+      <ul class="mt-2 -mx-2">
+        @for (a of recent(); track a.id) {
+          <li class="flex items-center gap-2 rounded-lg py-1 pl-2 [animation:fade-up_200ms_var(--ease-out-quart)]">
+            <span class="size-2 shrink-0 rounded-full" [class]="dot(a.status)" aria-hidden="true"></span>
+            <span class="min-w-0 flex-1 truncate text-sm">{{ a.label }}</span>
+            <button
+              type="button"
+              class="btn btn-ghost size-9 min-h-9 shrink-0 px-0"
+              [attr.aria-label]="'Undo ' + a.label"
+              (click)="undo.emit(a.id)"
+            >
+              <ap-icon name="undo" [size]="15" />
+            </button>
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="mt-2 text-sm text-fg-muted">Changes you make appear here, each with an undo.</p>
+    }
+  </section>
+
+  <section class="card p-5">
+    <h2 class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-fg-subtle">
+      <ap-icon name="keyboard" [size]="14" /> Shortcuts
+    </h2>
+    <dl class="mt-3 space-y-2 text-sm">
+      @for (s of shortcuts; track s.label) {
+        <div class="flex items-center justify-between gap-3">
+          <dt class="text-fg-muted">{{ s.label }}</dt>
+          <dd class="flex shrink-0 gap-1">
+            @for (k of s.keys; track k) {
+              <kbd class="min-w-6 rounded-md border border-line bg-surface-2/60 px-1.5 text-center text-[11px] font-semibold">{{
+                k
+              }}</kbd>
+            }
+          </dd>
+        </div>
+      }
+    </dl>
+  </section>
+</aside>

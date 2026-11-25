@@ -1,5 +1,6 @@
 <div
-  class="pointer-events-none fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-50 flex flex-col items-center gap-2 px-4 lg:bottom-6 lg:items-end lg:px-6"
+  class="pointer-events-none fixed inset-x-0 bottom-[calc(5.5rem+var(--ap-toast-inset)+env(safe-area-inset-bottom))] z-50 flex flex-col items-center gap-2 px-4 transition-[bottom] duration-200 lg:bottom-[calc(1.5rem+var(--ap-toast-inset))] lg:items-end lg:px-6"
+  [style.--ap-toast-inset.px]="toasts.bottomInset()"
   aria-live="polite"
   aria-atomic="false"
 >

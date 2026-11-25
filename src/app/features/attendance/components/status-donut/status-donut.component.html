@@ -1,0 +1,17 @@
+<svg viewBox="0 0 100 100" class="absolute inset-0 size-full -rotate-90" aria-hidden="true">
+  <circle cx="50" cy="50" [attr.r]="r" fill="none" class="stroke-surface-2" [attr.stroke-width]="thickness()" />
+  @for (s of segments(); track s.key) {
+    <circle
+      cx="50"
+      cy="50"
+      [attr.r]="r"
+      fill="none"
+      class="segment"
+      [style.stroke]="s.color"
+      [attr.stroke-width]="thickness()"
+      [attr.stroke-dasharray]="s.dash"
+      [attr.stroke-dashoffset]="s.offset"
+    />
+  }
+</svg>
+<div class="relative text-center"><ng-content /></div>

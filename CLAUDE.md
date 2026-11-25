@@ -67,7 +67,8 @@ styles/tokens.css  Brand ramps + semantic roles (light/dark/.theme-dark)
 
 ## Design system (AmaliTech "Unified Experience Design" Figma)
 - Brand: navy `primary-500 #08283B`, orange `orange-500 #FF5A00`; headings Poppins, body Inter; radius-xl 12px.
-- Use semantic utilities (`bg-surface`, `text-fg-muted`, `bg-status-p-soft`, `btn btn-primary`, `card`, `field`, `glass`). No raw hex in components.
+- Use semantic utilities (`bg-surface`, `text-fg-muted`, `bg-status-p-soft`, `btn btn-primary`, `card`, `field`, `glass`, `sheet`). No raw hex in components.
+- Modals = native `<dialog class="sheet">` (bottom sheet on phones, centered from `sm`). Status colours per P/L/A/E: `features/attendance/attendance-status.const.ts`.
 - Glass: `glass` (floating layers), `glass-strong` (hero panels, e.g. login card), `glass-tile` (translucent content inside a glass
   panel, no blur). Never nest backdrop-filters or put one on an *ancestor* of menus/sheets (breaks child blur and `position: fixed`).
 - `.theme-dark` forces dark tokens on a subtree (login brand scene) regardless of the user's theme.

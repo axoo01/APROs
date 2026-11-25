@@ -1,0 +1,102 @@
+<div class="flex flex-col gap-3">
+  <div class="flex items-center gap-2">
+    <label class="relative min-w-0 flex-1">
+      <span class="sr-only">Search apprentices</span>
+      <ap-icon
+        name="search"
+        [size]="18"
+        class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-fg-subtle"
+      />
+      <input
+        #searchInput
+        type="search"
+        class="field pl-10 pr-10"
+        placeholder="Search name or email"
+        autocomplete="off"
+        enterkeyhint="search"
+        aria-keyshortcuts="/"
+        [value]="search()"
+        (input)="onSearch($event)"
+        (keydown.escape)="clearSearch()"
+      />
+      @if (search()) {
+        <button
+          type="button"
+          class="absolute right-1 top-1/2 grid size-9 -translate-y-1/2 place-items-center rounded-lg text-fg-subtle hover:bg-surface-2 hover:text-fg"
+          aria-label="Clear search"
+          (click)="clearSearch()"
+        >
+          <ap-icon name="x" [size]="16" />
+        </button>
+      } @else {
+        <kbd
+          class="pointer-events-none absolute right-3 top-1/2 hidden -translate-y-1/2 rounded-md border border-line px-1.5 text-[11px] font-medium text-fg-subtle lg:block"
+          aria-hidden="true"
+          >/</kbd
+        >
+      }
+    </label>
+
+    <!-- Phone: native picker (compact, OS sheet). Desktop: segmented control. Same model. -->
+    <label class="shrink-0 sm:hidden">
+      <span class="sr-only">Coach filter</span>
+      <select class="field w-auto pr-8 text-sm font-medium" [value]="coach()" (change)="onCoachSelect($event)">
+        @for (o of coachOptions; track o.value) {
+          <option [value]="o.value">{{ o.value === 'ALL' ? 'All coaches' : o.label }}</option>
+        }
+      </select>
+    </label>
+    <div class="hidden sm:block">
+      <div role="radiogroup" aria-label="Coach filter" class="flex rounded-xl border border-line bg-surface-2/60 p-1">
+        @for (o of coachOptions; track o.value) {
+          <button
+            type="button"
+            role="radio"
+            [attr.aria-checked]="coach() === o.value"
+            class="min-h-9 rounded-lg px-3 text-sm font-medium transition-colors"
+            [class]="coach() === o.value ? 'bg-surface text-fg shadow-sm' : 'text-fg-muted hover:text-fg'"
+            (click)="coach.set(o.value)"
+          >
+            {{ o.label }}
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+
+  <div
+    class="no-scrollbar -mx-4 flex snap-x gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0"
+    role="group"
+    aria-label="Filter by specialization"
+  >
+    <button
+      type="button"
+      class="chip"
+      [attr.aria-pressed]="spec() === 'ALL'"
+      (click)="spec.set('ALL')"
+    >
+      All
+    </button>
+    @for (c of chips(); track c.specialization.id) {
+      <button
+        type="button"
+        class="chip"
+        [attr.aria-pressed]="spec() === c.specialization.id"
+        [attr.aria-label]="c.specialization.name + ', ' + c.remaining + ' not here yet'"
+        (click)="spec.set(spec() === c.specialization.id ? 'ALL' : c.specialization.id)"
+      >
+        <span
+          class="size-2.5 rounded-full"
+          [style.background-color]="tagColor(c.specialization.colorTag)"
+          aria-hidden="true"
+        ></span>
+        {{ c.specialization.name }}
+        @if (c.remaining > 0) {
+          <span class="chip-count">{{ c.remaining }}</span>
+        } @else {
+          <ap-icon name="check" [size]="14" class="text-status-p" />
+        }
+      </button>
+    }
+  </div>
+</div>

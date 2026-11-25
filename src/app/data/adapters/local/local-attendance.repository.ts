@@ -55,9 +55,14 @@ export class LocalAttendanceRepository extends AttendanceRepository {
   }
 
   clear(apprenticeId: Id, date: IsoDate): Observable<void> {
+    return this.clearMany([apprenticeId], date);
+  }
+
+  clearMany(apprenticeIds: readonly Id[], date: IsoDate): Observable<void> {
     return this.db.write((db) => {
       requireActor(this.actors, 'attendance.record');
-      return { db: { ...db, attendance: removeOne(db.attendance, attendanceId(apprenticeId, date)) }, result: undefined };
+      const attendance = apprenticeIds.reduce((t, id) => removeOne(t, attendanceId(id, date)), db.attendance);
+      return { db: { ...db, attendance }, result: undefined };
     });
   }
 

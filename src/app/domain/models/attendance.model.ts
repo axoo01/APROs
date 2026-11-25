@@ -14,6 +14,15 @@ export const ATTENDANCE_REASONS = [
 ] as const;
 export type AttendanceReason = (typeof ATTENDANCE_REASONS)[number];
 
+export const REASON_LABELS: Readonly<Record<AttendanceReason, string>> = {
+  TRAFFIC: 'Traffic',
+  TRANSPORT: 'Transport',
+  SICK: 'Sick',
+  FAMILY: 'Family',
+  APPOINTMENT: 'Appointment',
+  OTHER: 'Other',
+};
+
 export interface AttendanceRecord extends Auditable {
   /** Deterministic: `${apprenticeId}:${date}` — guarantees one record per apprentice per day. */
   readonly id: Id;

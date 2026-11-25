@@ -7,5 +7,6 @@ export * from './rules/cohort-phase.rules';
 export * from './rules/working-days.rules';
 export * from './rules/attendance-metrics.rules';
 export * from './rules/attendance-validation.rules';
+export * from './rules/attendance-patterns.rules';
 export * from './rules/permissions.rules';
 export * from './utils/entity-table.util';

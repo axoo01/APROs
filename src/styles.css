@@ -165,6 +165,36 @@
   }
 }
 
+/* Native <dialog> as a bottom sheet on phones, centered card from `sm`. Backdrop blur lives on ::backdrop (top layer, not an ancestor). */
+@utility sheet {
+  margin: auto auto 0;
+  width: 100%;
+  max-width: none;
+  max-height: 92dvh;
+  padding: 0;
+  border: 1px solid var(--ap-line);
+  border-radius: var(--radius-3xl) var(--radius-3xl) 0 0;
+  background-color: var(--ap-surface);
+  color: var(--ap-fg);
+  box-shadow: var(--shadow-float);
+  overscroll-behavior: contain;
+  &[open] {
+    animation: sheet-in 260ms var(--ease-out-quart);
+  }
+  &::backdrop {
+    background-color: color-mix(in oklab, var(--color-primary-900) 45%, transparent);
+    backdrop-filter: blur(4px);
+  }
+  @media (min-width: 40rem) {
+    margin: auto;
+    max-width: 30rem;
+    border-radius: var(--radius-3xl);
+    &[open] {
+      animation: menu-in 200ms var(--ease-out-quart);
+    }
+  }
+}
+
 @utility pb-safe {
   padding-bottom: env(safe-area-inset-bottom);
 }
