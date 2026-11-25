@@ -1,4 +1,12 @@
-import { attendanceId, isWeekend, selectAll, type IsoDate } from '../../domain';
+import {
+  absenceStreak,
+  attendanceId,
+  isWeekend,
+  latesThisWeek,
+  selectAll,
+  type AttendanceStatus,
+  type IsoDate,
+} from '../../domain';
 import { createSeedDb } from './seed-db.factory';
 import { DEMO_PERSONAS } from './personas.const';
 
@@ -25,13 +33,14 @@ describe('createSeedDb', () => {
     expect(c4.nonWorkingDays).toContain('2026-12-25');
   });
 
-  it('has a realistic Cohort 4 roster with unassigned apprentices', () => {
+  it('seeds Cohort 4 with the real roster, six per coach', () => {
     const c4 = cohorts.find((c) => c.code === '26-11-04')!;
     const roster = apprentices.filter((a) => a.cohortId === c4.id);
-    expect(roster).toHaveLength(46);
-    expect(roster.filter((a) => a.coachId === null)).toHaveLength(3);
-    expect(roster.filter((a) => a.status === 'WITHDRAWN')).toHaveLength(1);
+    expect(roster).toHaveLength(30);
+    expect(roster.every((a) => a.status === 'ACTIVE' && a.coachId !== null)).toBe(true);
+    expect(new Set(roster.map((a) => a.coachId)).size).toBe(5);
     expect(new Set(roster.map((a) => a.specializationId)).size).toBe(6);
+    expect(roster.some((a) => a.firstName === 'Aklile' && a.lastName === 'Seyoum Mamo')).toBe(true);
   });
 
   it('keeps referential integrity', () => {
@@ -68,6 +77,29 @@ describe('createSeedDb', () => {
   it('includes every demo persona as an active user', () => {
     const emails = new Set(selectAll(db.users).filter((u) => u.isActive).map((u) => u.email));
     for (const p of DEMO_PERSONAS) expect(emails.has(p.email)).toBe(true);
+  });
+
+  it('plants absence streaks ending yesterday and repeated lates this week in the live cohort', () => {
+    const wednesday = createSeedDb(new Date(2026, 10, 25, 10, 0, 0)); // Wed 25 Nov 2026
+    const c4 = selectAll(wednesday.cohorts).find((c) => c.code === '26-11-04')!;
+    const byApprentice = new Map<string, Map<IsoDate, AttendanceStatus>>();
+    for (const r of selectAll(wednesday.attendance).filter((x) => x.cohortId === c4.id)) {
+      const m = byApprentice.get(r.apprenticeId) ?? new Map<IsoDate, AttendanceStatus>();
+      byApprentice.set(r.apprenticeId, m.set(r.date, r.status));
+    }
+    const marks = [...byApprentice.values()];
+    const streaks = marks.map((m) => absenceStreak(m, '2026-11-25', c4)).filter((n) => n >= 5);
+    const lates = marks.map((m) => latesThisWeek(m, '2026-11-25')).filter((n) => n >= 2);
+    expect(streaks.length).toBeGreaterThanOrEqual(3);
+    expect(lates.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it('caps live-cohort history at the last 20 working days', () => {
+    const later = createSeedDb(new Date(2026, 11, 16, 10, 0, 0)); // Wed 16 Dec 2026
+    const c4 = selectAll(later.cohorts).find((c) => c.code === '26-11-04')!;
+    const days = new Set(selectAll(later.attendance).filter((r) => r.cohortId === c4.id).map((r) => r.date));
+    expect(days.size).toBe(20);
+    expect([...days].sort().at(-1)).toBe('2026-12-15');
   });
 
   it('stays well within localStorage limits', () => {

@@ -1,0 +1,104 @@
+<a
+  routerLink="/attendance"
+  class="-ml-2 mb-1 inline-flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-sm font-medium text-fg-muted transition-colors hover:text-fg"
+>
+  <ap-icon name="arrow-right" [size]="16" class="rotate-180" /> Today's Sweep
+</a>
+
+<ap-page-header
+  title="Attendance Log"
+  [subtitle]="(f.cohort()?.displayName ?? '') + (f.scopeLabel() ? ' · ' + f.scopeLabel() : '')"
+/>
+
+<ap-log-toolbar
+  class="mt-5 block"
+  [preset]="f.preset()"
+  [day]="f.day()"
+  [minDay]="f.minDay()"
+  [maxDay]="f.today()"
+  [canExport]="f.canExport()"
+  [exportDisabled]="f.visibleRows().length === 0 || f.days().length === 0"
+  (presetChange)="f.setPreset($event)"
+  (dayChange)="onDay($event)"
+  (step)="f.stepDay($event)"
+  (export)="export()"
+/>
+
+<p class="mt-3 flex items-center gap-2 text-sm text-fg-muted" aria-live="polite">
+  <ap-icon name="calendar-check" [size]="16" />
+  @if (firstDay(); as start) {
+    @if (start === lastDay()) {
+      {{ start | date: 'EEEE, d MMMM y' }}
+    } @else {
+      {{ start | date: 'EEE d MMM' }} – {{ lastDay() | date: 'EEE d MMM' }} · {{ f.days().length }} working days
+    }
+  } @else {
+    No working days in this range
+  }
+</p>
+
+<ap-kpi-strip
+  class="mt-4 block"
+  [kpis]="f.kpis()"
+  [priorLabel]="f.priorLabel()"
+  [followUpOnly]="f.followUpOnly()"
+  (toggleFollowUp)="f.followUpOnly.set(!f.followUpOnly())"
+/>
+
+<ap-sweep-filter-bar
+  class="mt-5 block"
+  [chips]="f.chips()"
+  [search]="f.searchText()"
+  [(spec)]="f.specFilter"
+  [(coach)]="f.coachFilter"
+  (searchChange)="f.setSearch($event)"
+/>
+
+<section class="mt-5" aria-label="Attendance records">
+  @if (f.days().length === 0) {
+    <div class="flex flex-col items-center rounded-2xl border border-dashed border-line px-6 py-12 text-center">
+      <span class="grid size-12 place-items-center rounded-2xl bg-surface-2 text-fg-subtle">
+        <ap-icon name="calendar-check" [size]="22" />
+      </span>
+      <p class="mt-3 font-semibold">Nothing to show for this range</p>
+      <p class="mt-1 max-w-sm text-sm text-fg-muted">
+        It's a weekend, a holiday, or before the cohort started. Pick another day or preset.
+      </p>
+    </div>
+  } @else if (f.visibleRows().length === 0) {
+    <div class="flex flex-col items-center rounded-2xl border border-dashed border-line px-6 py-12 text-center">
+      <span class="grid size-12 place-items-center rounded-2xl bg-surface-2 text-fg-subtle">
+        <ap-icon name="search" [size]="22" />
+      </span>
+      <p class="mt-3 font-semibold">No apprentices match</p>
+      <p class="mt-1 max-w-sm text-sm text-fg-muted">Try another name, specialization or coach filter.</p>
+      @if (f.followUpOnly()) {
+        <button type="button" class="btn btn-secondary mt-4" (click)="f.followUpOnly.set(false)">Show everyone</button>
+      }
+    </div>
+  } @else if (f.isDayView()) {
+    <ap-day-list [groups]="f.groups()" [day]="f.day()" (cellSelect)="edit($event)" />
+  } @else {
+    <div class="hidden md:block">
+      <ap-attendance-matrix [groups]="f.groups()" [days]="f.days()" [today]="f.today()" (cellSelect)="edit($event)" />
+      <p class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-fg-muted">
+        <span>Click a cell to edit · arrow keys move</span>
+        <span class="inline-flex items-center gap-1.5"><span class="size-3 rounded bg-status-p-soft"></span>P Present</span>
+        <span class="inline-flex items-center gap-1.5"><span class="size-3 rounded bg-status-l-soft"></span>L Late</span>
+        <span class="inline-flex items-center gap-1.5"><span class="size-3 rounded bg-status-a"></span>A Absent</span>
+        <span class="inline-flex items-center gap-1.5"><span class="size-3 rounded bg-status-e-soft"></span>E Excused</span>
+        <span class="inline-flex items-center gap-1.5"><span class="size-3 rounded border border-dashed border-line"></span>No record</span>
+      </p>
+    </div>
+    <div class="md:hidden">
+      <ap-log-card-list [groups]="f.groups()" [today]="f.today()" (cellSelect)="edit($event)" />
+    </div>
+  }
+</section>
+
+<ap-status-drawer
+  [entry]="editTarget()"
+  (save)="onSave($event)"
+  (cleared)="onClear()"
+  (closed)="editing.set(null)"
+/>

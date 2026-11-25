@@ -28,6 +28,27 @@ import { Prng } from './prng.util';
 
 const STRUCTURE_SEED = 0xa9_2026;
 const HISTORY_SEED = 0x11_0426;
+const PATTERN_SEED = 0x57_4eaf;
+
+/** The live demo cohort's history covers (at most) the last 4 weeks of working days before today. */
+export const LIVE_HISTORY_WORKING_DAYS = 20;
+
+/** Coach whose group gets the planted patterns, so "Mine" shows them when demoing as the coach persona. */
+const PATTERN_COACH_EMAIL = 'axcel@apros.demo';
+
+/** Planted, deterministic patterns so streak pills and follow-up insights are visible right after a reset. */
+/** Consecutive `A` days ending yesterday — coach persona's group first, then others. */
+const PLANTED_ABSENCE_STREAKS = { mine: [6, 2], others: [8, 3, 5, 2] } as const;
+/** Consecutive `L` days ending yesterday (so this week's Mon/Tue are late on a Wednesday). */
+const PLANTED_LATE_RUNS = { mine: [3, 2], others: [3, 2, 3] } as const;
+
+const NOTES: Readonly<Partial<Record<AttendanceReason, readonly string[]>>> = {
+  SICK: ['Called in with a fever', 'Clinic visit — sick note to follow', 'Flu, resting at home'],
+  APPOINTMENT: ['Embassy visa appointment', 'Dental appointment', 'Bank appointment, back after lunch'],
+  FAMILY: ['Family emergency', 'Travelled for a family funeral'],
+  TRANSPORT: ['Trotro breakdown on the way', 'Ride cancelled last minute'],
+  TRAFFIC: ['Heavy traffic at Kwame Nkrumah Circle', 'Accident on the motorway'],
+};
 
 /** Ghana public holidays + programme year-end break (2026–27). Weekends are implicit. */
 const NON_WORKING_DAYS: readonly IsoDate[] = [
@@ -47,12 +68,49 @@ interface UserSeed {
 const USERS: readonly UserSeed[] = [
   { fullName: 'Abena Owusu-Ansah', email: 'abena.owusu-ansah@apros.demo', role: 'ADMIN', title: 'Head of Coaches' },
   { fullName: 'Daniel Nkansah', email: 'daniel.nkansah@apros.demo', role: 'ADMIN', title: 'Cohort Lead' },
-  { fullName: 'Kwesi Appiah', email: 'kwesi.appiah@apros.demo', role: 'COACH', title: 'Communication Coach' },
-  { fullName: 'Efua Mensah', email: 'efua.mensah@apros.demo', role: 'COACH', title: 'Habit Coach' },
-  { fullName: 'Jean-Paul Habimana', email: 'jean-paul.habimana@apros.demo', role: 'COACH', title: 'Technical Coach' },
-  { fullName: 'Selorm Agbeko', email: 'selorm.agbeko@apros.demo', role: 'COACH', title: 'Communication Coach' },
-  { fullName: 'Nadia Uwase', email: 'nadia.uwase@apros.demo', role: 'COACH', title: 'Habit Coach' },
+  { fullName: 'Jamillah', email: 'jamillah@apros.demo', role: 'COACH', title: 'Coach' },
+  { fullName: 'Favor', email: 'favor@apros.demo', role: 'COACH', title: 'Coach' },
+  { fullName: 'Nelly', email: 'nelly@apros.demo', role: 'COACH', title: 'Coach' },
+  { fullName: 'Peggy', email: 'peggy@apros.demo', role: 'COACH', title: 'Coach' },
+  { fullName: 'Axcel', email: 'axcel@apros.demo', role: 'COACH', title: 'Coach' },
 ];
+
+/** The live cohort's real roster: apprentice → coach (by the coach's seeded fullName). */
+const LIVE_ROSTER: readonly { readonly name: string; readonly coach: string }[] = [
+  { name: 'Aklile Seyoum Mamo', coach: 'Jamillah' },
+  { name: 'Aline Niyonizera', coach: 'Jamillah' },
+  { name: 'Dukundane Furaha Yves Derick', coach: 'Jamillah' },
+  { name: 'Erick Kanja', coach: 'Jamillah' },
+  { name: 'Innocent Bugingo', coach: 'Jamillah' },
+  { name: 'Iradukunda Toussaint', coach: 'Jamillah' },
+  { name: 'Irimaso Maurice', coach: 'Favor' },
+  { name: 'Mugabo Vedaste', coach: 'Favor' },
+  { name: 'Taylor Chongo', coach: 'Favor' },
+  { name: 'Victoire Ansima Ikuyo', coach: 'Favor' },
+  { name: 'Christine Umutoni', coach: 'Favor' },
+  { name: 'David Bonfils Kamanda', coach: 'Favor' },
+  { name: 'Fabrice Sheja', coach: 'Nelly' },
+  { name: 'Levy Imanzi', coach: 'Nelly' },
+  { name: 'Molo Munyansanga', coach: 'Nelly' },
+  { name: 'Olivier Kwizera', coach: 'Nelly' },
+  { name: 'Prince Dushimimana', coach: 'Nelly' },
+  { name: 'Umutoni Justine', coach: 'Nelly' },
+  { name: 'Amanuel Kebede', coach: 'Peggy' },
+  { name: 'Benjamin Ssempala', coach: 'Peggy' },
+  { name: 'Clement Nsengiyumva', coach: 'Peggy' },
+  { name: 'Kabera Clapton Gahenda', coach: 'Peggy' },
+  { name: 'Annick Ujeneza', coach: 'Peggy' },
+  { name: 'Kevine Uwisanga', coach: 'Peggy' },
+  { name: 'Emery Bashige', coach: 'Axcel' },
+  { name: 'Igizeneza Serge Benit', coach: 'Axcel' },
+  { name: 'Jesephus Mupanda', coach: 'Axcel' },
+  { name: 'Mugwaneza Manzi Audace', coach: 'Axcel' },
+  { name: 'Atete Shina Mpeta', coach: 'Axcel' },
+  { name: 'Nancy Kamikazi', coach: 'Axcel' },
+];
+
+/** Specializations are spread evenly across the live roster (not given in the source list). */
+const LIVE_SPEC_CYCLE: readonly string[] = ['FE', 'BE', 'DE', 'DO', 'QA', 'UX'];
 
 const SPECIALIZATIONS: readonly { name: string; code: string; colorTag: ColorTag }[] = [
   { name: 'Frontend Engineering', code: 'FE', colorTag: 'light-blue' },
@@ -75,6 +133,8 @@ interface CohortSeed {
   readonly withdrawn: number;
   readonly unassigned: number;
   readonly withHistory: boolean;
+  /** The cohort demoed live: real roster, recent-window history + planted patterns. */
+  readonly live?: boolean;
 }
 
 const COHORTS: readonly CohortSeed[] = [
@@ -96,7 +156,8 @@ const COHORTS: readonly CohortSeed[] = [
   {
     sequenceNumber: 4, phase1StartDate: '2026-11-02', phase1EndDate: '2027-01-29',
     phase2StartDate: '2027-02-08', phase2EndDate: '2027-05-28',
-    roster: { FE: 10, BE: 10, DE: 8, DO: 7, QA: 6, UX: 5 }, graduated: false, withdrawn: 1, unassigned: 3, withHistory: true,
+    roster: {}, graduated: false, withdrawn: 0, unassigned: 0, withHistory: true,
+    live: true,
   },
 ];
 
@@ -170,6 +231,38 @@ export function createSeedDb(now: Date): DbSchema {
       updatedAt: createdAt,
     };
     cohorts.push(cohort);
+
+    if (c.live) {
+      const coachByName = new Map(coaches.map((u) => [u.fullName, u.id]));
+      LIVE_ROSTER.forEach((entry, i) => {
+        const [first = entry.name, ...rest] = entry.name.split(' ');
+        const spec = specByCode.get(LIVE_SPEC_CYCLE[i % LIVE_SPEC_CYCLE.length]!);
+        const coachId = coachByName.get(entry.coach);
+        if (!spec || !coachId) throw new Error(`Bad live roster entry ${entry.name}`);
+        usedNames.add(entry.name);
+        const slug = entry.name.toLowerCase().replace(/[^a-z ]/g, '').trim().replace(/\s+/g, '.');
+        let email = `${slug}@apprentice.apros.demo`;
+        for (let n = 2; usedEmails.has(email); n++) email = `${slug}${n}@apprentice.apros.demo`;
+        usedEmails.add(email);
+        const apprentice: Apprentice = {
+          id: rng.uuid(),
+          firstName: first,
+          lastName: rest.join(' '),
+          preferredName: null,
+          email,
+          avatarUrl: null,
+          cohortId: cohort.id,
+          specializationId: spec.id,
+          coachId,
+          status: 'ACTIVE',
+          createdAt,
+          updatedAt: createdAt,
+        };
+        apprentices.push(apprentice);
+        profiles.set(apprentice.id, rng.weighted(PROFILE_WEIGHTS));
+      });
+      continue;
+    }
 
     const members: Apprentice[] = [];
     for (const [specCode, count] of Object.entries(c.roster)) {
@@ -248,11 +341,14 @@ function buildHistory(
   const out: AttendanceRecord[] = [];
 
   cohorts.forEach((cohort, idx) => {
-    if (!seeds[idx]?.withHistory) return;
+    const seed = seeds[idx];
+    if (!seed?.withHistory) return;
     const end = [cohort.phase1EndDate, addDays(today, -1)].sort()[0]!;
-    const days = workingDaysBetween(cohort, cohort.phase1StartDate, end);
+    const allDays = workingDaysBetween(cohort, cohort.phase1StartDate, end);
+    const days = seed.live ? allDays.slice(-LIVE_HISTORY_WORKING_DAYS) : allDays;
     if (days.length === 0) return;
     const members = apprentices.filter((a) => a.cohortId === cohort.id);
+    const cohortRecords = new Map<Id, AttendanceRecord>();
 
     for (const a of members) {
       const profile = profiles.get(a.id) ?? 'steady';
@@ -265,14 +361,15 @@ function buildHistory(
         const recorder = a.coachId && rng.next() < 0.8 ? a.coachId : rng.pick(coaches).id;
         const recordedAt =
           status === 'L' ? at(date, 9, rng.int(5, 50)) : at(date, 8, rng.int(30, 59));
-        out.push({
+        const note = reason && status !== 'L' && rng.next() < 0.45 ? pickNote(rng, reason) : null;
+        cohortRecords.set(attendanceId(a.id, date), {
           id: attendanceId(a.id, date),
           apprenticeId: a.id,
           cohortId: cohort.id,
           date,
           status,
           reason,
-          note: null,
+          note,
           recordedBy: recorder,
           recordedAt,
           createdAt: recordedAt,
@@ -280,8 +377,65 @@ function buildHistory(
         });
       }
     }
+
+    if (seed.live) {
+      const coach = coaches.find((c) => c.email === PATTERN_COACH_EMAIL) ?? coaches[0];
+      const active = members.filter((m) => !withdrawnIds.has(m.id));
+      plantPatterns(cohortRecords, active, days, coach?.id ?? null);
+    }
+    out.push(...cohortRecords.values());
   });
   return out;
+}
+
+/**
+ * Overwrites history for a few apprentices (coach persona's group first) with recognisable patterns:
+ * absence streaks and runs of lates, both ending yesterday.
+ */
+function plantPatterns(
+  records: Map<Id, AttendanceRecord>,
+  active: readonly Apprentice[],
+  days: readonly IsoDate[],
+  coachId: Id | null,
+): void {
+  const rng = new Prng(PATTERN_SEED);
+  const mine = active.filter((a) => a.coachId === coachId);
+  const others = active.filter((a) => a.coachId !== coachId && a.coachId !== null);
+
+  const set = (a: Apprentice, date: IsoDate, status: AttendanceStatus, reason: AttendanceReason | null, note: string | null) => {
+    const id = attendanceId(a.id, date);
+    const base = records.get(id);
+    if (!base) return;
+    const recordedAt = status === 'L' ? at(date, 9, rng.int(5, 45)) : at(date, 10, rng.int(0, 30));
+    records.set(id, { ...base, status, reason, note, recordedAt, createdAt: recordedAt, updatedAt: recordedAt });
+  };
+
+  /** Overwrites the last `length` working days with `status`, plus a clean `P` edge before the run. */
+  const run = (a: Apprentice | undefined, length: number, status: 'A' | 'L', first: { reason: AttendanceReason; note: string } | null) => {
+    const n = Math.min(length, days.length - 1);
+    if (!a || n < 1) return;
+    days.slice(-n).forEach((d, j) => {
+      if (status === 'L') set(a, d, 'L', rng.weighted({ TRAFFIC: 3, TRANSPORT: 2 }), null);
+      else set(a, d, 'A', j === 0 && first ? first.reason : null, j === 0 && first ? first.note : null);
+    });
+    const edge = days[days.length - n - 1];
+    if (edge) set(a, edge, 'P', null, null);
+  };
+
+  // Absence streaks take the first apprentices of each pool, late runs the next ones — never overlapping.
+  PLANTED_ABSENCE_STREAKS.mine.forEach((n, i) =>
+    run(mine[i], n, 'A', i === 0 ? { reason: 'SICK', note: 'Called in sick — no update since' } : null),
+  );
+  PLANTED_ABSENCE_STREAKS.others.forEach((n, i) => run(others[i], n, 'A', null));
+  const mineOffset = PLANTED_ABSENCE_STREAKS.mine.length;
+  const othersOffset = PLANTED_ABSENCE_STREAKS.others.length;
+  PLANTED_LATE_RUNS.mine.forEach((n, i) => run(mine[mineOffset + i], n, 'L', null));
+  PLANTED_LATE_RUNS.others.forEach((n, i) => run(others[othersOffset + i], n, 'L', null));
+}
+
+function pickNote(rng: Prng, reason: AttendanceReason): string | null {
+  const options = NOTES[reason];
+  return options?.length ? rng.pick(options) : null;
 }
 
 function pickReason(rng: Prng, status: AttendanceStatus): AttendanceReason | null {

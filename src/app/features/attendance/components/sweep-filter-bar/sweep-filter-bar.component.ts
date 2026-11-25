@@ -2,12 +2,16 @@ import { ChangeDetectionStrategy, Component, type ElementRef, input, model, outp
 import type { Specialization } from '../../../../domain';
 import { IconComponent } from '../../../../shared/components/icon/icon.component';
 import { colorTagVar } from '../../../../shared/utils/color-tag.util';
-import type { CoachFilter, SpecFilter } from '../../data-access/attendance.facade';
+import type { CoachFilter, SpecFilter } from '../../data-access/roster-scope.util';
 
 export interface SpecializationChip {
   readonly specialization: Specialization;
-  readonly total: number;
-  readonly remaining: number;
+  /** Count shown on the chip (e.g. remaining, needs follow-up); null hides it. */
+  readonly badge: number | null;
+  /** Shows a check instead of a badge (e.g. everyone swept). */
+  readonly done: boolean;
+  /** Screen-reader suffix, e.g. "4 not here yet". */
+  readonly hint: string;
 }
 
 const COACH_OPTIONS: readonly { value: CoachFilter; label: string }[] = [

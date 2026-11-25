@@ -31,7 +31,7 @@ describe('DemoAuthService', () => {
 
   it('signs in by email case-insensitively and rejects unknown emails', async () => {
     const auth = TestBed.inject(AuthService);
-    expect((await firstValueFrom(auth.loginWithEmail('  EFUA.Mensah@apros.demo '))).role).toBe('COACH');
+    expect((await firstValueFrom(auth.loginWithEmail('  JAMILLAH@apros.demo '))).role).toBe('COACH');
     await expect(firstValueFrom(auth.loginWithEmail('nobody@apros.demo'))).rejects.toBeInstanceOf(UnauthenticatedError);
   });
 

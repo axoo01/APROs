@@ -167,7 +167,7 @@ describe('AttendanceRepository (production mode)', () => {
 
   it('blocks non-working days outside Demo Mode', async () => {
     // Persona login is demo-only, so sign in by email.
-    await firstValueFrom(TestBed.inject(AuthService).loginWithEmail('kwesi.appiah@apros.demo'));
+    await firstValueFrom(TestBed.inject(AuthService).loginWithEmail('axcel@apros.demo'));
     const c = await cohort4();
     const a = await firstApprentice(c);
     await expect(

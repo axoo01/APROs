@@ -37,6 +37,9 @@ export interface AttendanceRecord extends Auditable {
   readonly recordedAt: IsoDateTime;
 }
 
+/** The editable part of a day record — what a write sets and what undo restores. */
+export type AttendanceMark = Pick<AttendanceRecord, 'status' | 'reason' | 'note'>;
+
 export interface UpsertAttendanceInput {
   readonly apprenticeId: Id;
   readonly date: IsoDate;

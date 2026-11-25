@@ -82,7 +82,7 @@
         type="button"
         class="chip"
         [attr.aria-pressed]="spec() === c.specialization.id"
-        [attr.aria-label]="c.specialization.name + ', ' + c.remaining + ' not here yet'"
+        [attr.aria-label]="c.specialization.name + ', ' + c.hint"
         (click)="spec.set(spec() === c.specialization.id ? 'ALL' : c.specialization.id)"
       >
         <span
@@ -91,9 +91,9 @@
           aria-hidden="true"
         ></span>
         {{ c.specialization.name }}
-        @if (c.remaining > 0) {
-          <span class="chip-count">{{ c.remaining }}</span>
-        } @else {
+        @if (c.badge !== null) {
+          <span class="chip-count">{{ c.badge }}</span>
+        } @else if (c.done) {
           <ap-icon name="check" [size]="14" class="text-status-p" />
         }
       </button>

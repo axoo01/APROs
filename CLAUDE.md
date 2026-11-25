@@ -62,6 +62,11 @@ styles/tokens.css  Brand ramps + semantic roles (light/dark/.theme-dark)
 - **Metrics:** `E` is a neutral day, excluded from penalty denominators; keep raw `P/L/A/E` counts visible.
   Attendance = `(P+L)/(P+L+A)` (100% if 0) · Punctuality = `P/(P+L)` (100% if 0).
 - **Sweep buckets:** `Not Here Yet` · `Present` (P, L) · `Absent / Excused` (A, E).
+- **Patterns** (`attendance-patterns.rules`): absence streak = consecutive `A` over working days ending today
+  (`E` skipped, `P`/`L`/no record breaks; today `P`/`L` → 0). Card pill at streak ≥ 2 or ≥ 2 lates Mon→today.
+  **Needs follow-up** (log window): ≥ 2 `A` or ≥ 3 `L`.
+- **Log windows** (`attendance-window.rules`): This Week = Mon→today · Last Week = Mon–Fri · Last 30 Days · Single Day;
+  KPI deltas compare to the immediately preceding period of the same shape (a day → previous working day).
 - **Non-working days:** weekends + `cohort.nonWorkingDays` block recording in production; **Demo Mode never blocks** (warns only).
 - Dates are local `YYYY-MM-DD` (`IsoDate`); timestamps ISO-8601. Inject `Clock` — never `new Date()` in domain/services.
 
@@ -80,4 +85,6 @@ styles/tokens.css  Brand ramps + semantic roles (light/dark/.theme-dark)
 - Files kebab-case; selectors `ap-`; entity ids string UUIDs; entities `readonly`, state immutable.
 - **Testing pace (current):** no new unit tests for UI/screens/components — ship visual flows fast. Pure `domain/` rules
   still get a small spec. Existing specs must keep passing (`npm run verify`). Types stay strict; structure stays production-grade.
-- Seed data is deterministic (`Prng`) — keep it stable across resets.
+- Seed data is deterministic (`Prng`) — keep it stable across resets. Live cohort (`26-11-04`) = last 20 working days
+  before today (clamped to its start), real 30-person roster (`LIVE_ROSTER`, 5 coaches) + planted absence streaks and
+  late runs ending yesterday, starting with the coach persona's (Axcel) group.

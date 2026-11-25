@@ -1,0 +1,75 @@
+@for (g of groups(); track g.specialization?.id ?? 'none') {
+  <section class="mt-5 first:mt-0">
+    <h3 class="flex items-center gap-2 px-1 text-xs font-semibold uppercase tracking-wider text-fg-subtle">
+      @if (g.specialization; as s) {
+        <span class="size-2 rounded-full" [style.background-color]="tagColor(s.colorTag)" aria-hidden="true"></span>
+        {{ s.name }}
+      } @else {
+        No specialization
+      }
+      <span class="font-normal">· {{ g.rows.length }} · {{ g.summary.attendanceRate | percent }}</span>
+    </h3>
+    <ul class="mt-2.5 flex flex-col gap-2">
+      @for (r of g.rows; track r.id) {
+        <li class="card overflow-hidden">
+          <button
+            type="button"
+            class="flex w-full min-h-16 flex-col gap-2 px-4 py-3 text-left"
+            [attr.aria-expanded]="expanded().has(r.id)"
+            [attr.aria-controls]="'log-days-' + r.id"
+            (click)="toggle(r)"
+          >
+            <span class="flex w-full items-center gap-2">
+              <span class="min-w-0 flex-1">
+                <span class="block truncate font-semibold">{{ r.name }}</span>
+                <span class="block truncate text-xs text-fg-muted">{{ r.coachName ?? 'Unassigned' }}</span>
+              </span>
+              @if (r.followUp) {
+                <span class="shrink-0 rounded-full bg-status-a-soft px-2 py-0.5 text-[10px] font-semibold text-status-a">Follow up</span>
+              }
+              <span class="shrink-0 text-right text-xs tabular-nums">
+                <span class="block font-semibold text-fg">{{ r.summary.total ? (r.summary.attendanceRate | percent) : '—' }}</span>
+                <span class="block text-fg-muted">P {{ r.summary.total ? (r.summary.punctualityRate | percent) : '—' }}</span>
+              </span>
+              <ap-icon
+                name="chevron-down"
+                [size]="18"
+                class="shrink-0 text-fg-subtle transition-transform"
+                [class.rotate-180]="expanded().has(r.id)"
+              />
+            </span>
+            <span class="flex w-full gap-0.5" aria-hidden="true">
+              @for (c of r.cells; track c.date) {
+                <span class="h-2 min-w-1 flex-1 rounded-full" [class]="c.record ? tone(c.record) : 'bg-surface-2'"></span>
+              }
+            </span>
+          </button>
+
+          @if (expanded().has(r.id)) {
+            <ul
+              [id]="'log-days-' + r.id"
+              class="grid grid-cols-5 gap-1.5 border-t border-line bg-surface-2/40 p-3 [animation:fade-up_180ms_var(--ease-out-quart)]"
+            >
+              @for (c of r.cells; track c.date) {
+                <li>
+                  <button
+                    type="button"
+                    class="flex h-14 w-full flex-col items-center justify-center rounded-xl text-[11px] font-medium"
+                    [class]="tone(c.record)"
+                    [class.ring-2]="c.date === today()"
+                    [class.ring-accent]="c.date === today()"
+                    [attr.aria-label]="(c.date | date: 'EEEE d MMMM') + ': ' + describe(c.record) + '. Edit'"
+                    (click)="cellSelect.emit({ apprenticeId: r.id, date: c.date })"
+                  >
+                    <span class="opacity-80">{{ c.date | date: 'EEE d' }}</span>
+                    <span class="font-display text-base font-semibold leading-tight">{{ c.record?.status ?? '·' }}</span>
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        </li>
+      }
+    </ul>
+  </section>
+}

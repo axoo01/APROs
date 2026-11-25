@@ -1,5 +1,5 @@
 import type { AttendanceStatus, IsoDate } from '../models';
-import { absenceStreak, isNotablePattern, latesThisWeek } from './attendance-patterns.rules';
+import { absenceStreak, isNotablePattern, latesThisWeek, needsFollowUp } from './attendance-patterns.rules';
 
 const calendar = { nonWorkingDays: ['2026-11-20'] as IsoDate[] }; // Fri 20 Nov is a holiday
 const marks = (entries: Record<IsoDate, AttendanceStatus>) => new Map(Object.entries(entries));
@@ -35,5 +35,11 @@ describe('attendance patterns', () => {
     expect(isNotablePattern({ absenceStreak: 2, latesThisWeek: 0 })).toBe(true);
     expect(isNotablePattern({ absenceStreak: 1, latesThisWeek: 2 })).toBe(true);
     expect(isNotablePattern({ absenceStreak: 1, latesThisWeek: 1 })).toBe(false);
+  });
+
+  it('flags follow-up at 2+ absences or 3+ lates, never for excused days', () => {
+    expect(needsFollowUp({ A: 2, L: 0 })).toBe(true);
+    expect(needsFollowUp({ A: 0, L: 3 })).toBe(true);
+    expect(needsFollowUp({ A: 1, L: 2 })).toBe(false);
   });
 });

@@ -1,0 +1,46 @@
+<ul class="grid grid-cols-2 gap-2.5 lg:grid-cols-4 lg:gap-3" aria-label="Key figures for the selected scope">
+  @for (t of tiles(); track t.key) {
+    <li>
+      @if (t.key === 'follow') {
+        <button
+          type="button"
+          class="glass flex h-full w-full flex-col rounded-2xl border p-4 text-left transition-[box-shadow,transform] active:scale-[0.99]"
+          [class.ring-2]="followUpOnly()"
+          [class.ring-accent]="followUpOnly()"
+          [attr.aria-pressed]="followUpOnly()"
+          [title]="t.hint"
+          (click)="toggleFollowUp.emit()"
+        >
+          <ng-container *ngTemplateOutlet="body; context: { $implicit: t }" />
+          <span class="mt-2 text-[11px] font-semibold text-accent">{{ followUpOnly() ? 'Showing only these · clear' : 'Tap to filter' }}</span>
+        </button>
+      } @else {
+        <div class="glass flex h-full flex-col rounded-2xl border p-4" [title]="t.hint">
+          <ng-container *ngTemplateOutlet="body; context: { $implicit: t }" />
+        </div>
+      }
+    </li>
+  }
+</ul>
+
+<ng-template #body let-t>
+  <span class="text-xs font-semibold text-fg-muted">{{ t.label }}</span>
+  <span class="mt-1.5 font-display text-[1.75rem] font-semibold leading-none tabular-nums" aria-live="polite">
+    @if (!kpis().hasData && t.kind === 'rate') {
+      —
+    } @else if (t.kind === 'rate') {
+      {{ t.kpi.value | percent: '1.0-1' }}
+    } @else {
+      {{ t.kpi.value }}
+    }
+  </span>
+  <span class="mt-2 flex items-center gap-1 text-[11px] font-medium" [class]="deltaTone(t)">
+    @if (deltaIcon(t); as icon) {
+      <ap-icon [name]="icon" [size]="13" />
+    }
+    {{ deltaText(t) }}
+    @if (t.kpi.delta !== null) {
+      <span class="truncate font-normal text-fg-subtle">{{ priorLabel() }}</span>
+    }
+  </span>
+</ng-template>

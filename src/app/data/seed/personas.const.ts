@@ -18,7 +18,7 @@ export const DEMO_PERSONAS: readonly DemoPersona[] = [
   {
     role: 'COACH',
     label: 'Coach',
-    email: 'kwesi.appiah@apros.demo',
+    email: 'axcel@apros.demo',
     blurb: 'Daily attendance, EOD pacing and weekly behavior for any apprentice.',
   },
 ];

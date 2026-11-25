@@ -1,4 +1,5 @@
 import { DatePipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import {
   type AnimationCallbackEvent,
   ChangeDetectionStrategy,
@@ -44,6 +45,7 @@ const EMPTY_COPY = {
   selector: 'ap-attendance-page',
   imports: [
     DatePipe,
+    RouterLink,
     IconComponent,
     PageHeaderComponent,
     ApprenticeCardComponent,

@@ -1,4 +1,5 @@
 import type { AttendanceStatus, Cohort, IsoDate } from '../models';
+import type { AttendanceTally } from './attendance-metrics.rules';
 import { addDays, startOfWeek } from '../utils/date.util';
 import { isWorkingDay } from './working-days.rules';
 
@@ -57,4 +58,12 @@ export function detectPattern(marks: MarksByDate, today: IsoDate, calendar: Work
 
 export function isNotablePattern(p: AttendancePattern): boolean {
   return p.absenceStreak >= PATTERN_THRESHOLDS.absenceStreak || p.latesThisWeek >= PATTERN_THRESHOLDS.latesThisWeek;
+}
+
+/** Over a reporting window: when an apprentice needs a coach's follow-up. */
+export const FOLLOW_UP_THRESHOLDS = { absences: 2, lates: 3 } as const;
+
+/** 2+ unexcused absences or 3+ lates in the window. `E` never triggers follow-up (neutral). */
+export function needsFollowUp(t: Pick<AttendanceTally, 'A' | 'L'>): boolean {
+  return t.A >= FOLLOW_UP_THRESHOLDS.absences || t.L >= FOLLOW_UP_THRESHOLDS.lates;
 }

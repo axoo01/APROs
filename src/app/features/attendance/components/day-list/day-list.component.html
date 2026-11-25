@@ -1,0 +1,50 @@
+@for (g of groups(); track g.specialization?.id ?? 'none') {
+  <section class="mt-5 first:mt-0">
+    <h3 class="flex items-center gap-2 px-1 text-xs font-semibold uppercase tracking-wider text-fg-subtle">
+      @if (g.specialization; as s) {
+        <span class="size-2 rounded-full" [style.background-color]="tagColor(s.colorTag)" aria-hidden="true"></span>
+        {{ s.name }}
+      } @else {
+        No specialization
+      }
+      <span class="font-normal">· {{ g.rows.length }}</span>
+    </h3>
+    <ul class="card mt-2.5 divide-y divide-line overflow-hidden">
+      @for (r of g.rows; track r.id) {
+        @let cell = r.cells[0];
+        @let rec = cell?.record ?? null;
+        <li>
+          <button
+            type="button"
+            class="flex w-full min-h-16 items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-surface-2/60"
+            [attr.aria-label]="r.name + ', ' + (rec ? statusLabels[rec.status] : 'no record') + '. Edit'"
+            (click)="cellSelect.emit({ apprenticeId: r.id, date: day() })"
+          >
+            <ap-avatar [name]="r.name" [seed]="r.id" [src]="r.apprentice.avatarUrl" [size]="40" />
+            <span class="min-w-0 flex-1">
+              <span class="block truncate font-semibold">{{ r.name }}</span>
+              <span class="block truncate text-xs text-fg-muted">
+                {{ detail(rec) ?? r.coachName ?? 'Unassigned' }}
+              </span>
+            </span>
+            <span class="hidden shrink-0 text-right text-xs text-fg-muted sm:block">
+              @if (rec) {
+                <span class="block">by {{ cell?.recorder ?? 'Unknown' }}</span>
+                <span class="block tabular-nums">{{ rec.recordedAt | date: 'HH:mm' }}</span>
+              }
+            </span>
+            @if (rec) {
+              <span class="inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold" [class]="tones[rec.status].soft">
+                <span class="font-display">{{ rec.status }}</span>
+                <span class="hidden sm:inline">{{ statusLabels[rec.status] }}</span>
+              </span>
+            } @else {
+              <span class="shrink-0 rounded-full border border-dashed border-line px-2.5 py-1 text-xs font-medium text-fg-subtle">No record</span>
+            }
+            <ap-icon name="chevron-right" [size]="16" class="shrink-0 text-fg-subtle" />
+          </button>
+        </li>
+      }
+    </ul>
+  </section>
+}

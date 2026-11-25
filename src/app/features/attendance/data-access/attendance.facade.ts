@@ -13,7 +13,7 @@ import {
   type Apprentice,
   type AttendancePattern,
   type AttendanceBucket,
-  type AttendanceReason,
+  type AttendanceMark,
   type AttendanceRecord,
   type AttendanceStatus,
   type Id,
@@ -26,25 +26,22 @@ import { CohortContextStore } from '../../../core/state/cohort-context.store';
 import { ReferenceDataStore } from '../../../core/state/reference-data.store';
 import { ApprenticeRepository } from '../../../data/ports/apprentice.repository';
 import { AttendanceRepository } from '../../../data/ports/attendance.repository';
+import type { SpecializationChip } from '../components/sweep-filter-bar/sweep-filter-bar.component';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { errorMessage } from '../../../shared/utils/error-message.util';
 import { streamFor } from '../../../shared/utils/stream-for.util';
 import { formatDayReport } from './day-report.util';
+import { describeScope, inRosterScope, matchesSearch, type CoachFilter, type SpecFilter } from './roster-scope.util';
 
 /** How long a just-marked card lingers in "Not Here Yet" — a second tap inside this window upgrades P → L. */
 export const REVEAL_MS = 650;
 const SEARCH_DEBOUNCE_MS = 150;
 const UNDO_DEPTH = 20;
 
-export type CoachFilter = 'ALL' | 'MINE' | 'UNASSIGNED';
-export type SpecFilter = Id | 'ALL';
+export type { CoachFilter, SpecFilter } from './roster-scope.util';
 
 /** The mutable part of a day record — what a write sets and what undo restores. */
-export interface MarkSnapshot {
-  readonly status: AttendanceStatus;
-  readonly reason: AttendanceReason | null;
-  readonly note: string | null;
-}
+export type MarkSnapshot = AttendanceMark;
 
 export interface SweepEntry {
   readonly id: Id;
@@ -221,16 +218,8 @@ export class AttendanceFacade {
 
   /** Apprentices in the current specialization + coach scope (search is a view filter, not a scope). */
   readonly scope = computed(() => {
-    const spec = this.specFilter();
-    const coach = this.coachFilter();
-    const me = this.refs.currentUser()?.id ?? null;
-    return this.entries().filter(
-      (e) =>
-        (spec === 'ALL' || e.apprentice.specializationId === spec) &&
-        (coach === 'ALL' ||
-          (coach === 'MINE' && e.apprentice.coachId !== null && e.apprentice.coachId === me) ||
-          (coach === 'UNASSIGNED' && e.apprentice.coachId === null)),
-    );
+    const scope = { spec: this.specFilter(), coach: this.coachFilter(), me: this.refs.currentUser()?.id ?? null };
+    return this.entries().filter((e) => inRosterScope(e.apprentice, scope));
   });
 
   readonly counts = computed(() => {
@@ -251,20 +240,13 @@ export class AttendanceFacade {
 
   /** Human label for the active scope, e.g. "Frontend · your group"; null = whole cohort. */
   readonly scopeLabel = computed(() => {
-    const parts: string[] = [];
     const spec = this.specFilter();
-    if (spec !== 'ALL') {
-      const name = this.refs.specializationById().get(spec)?.name;
-      if (name) parts.push(name);
-    }
-    const coach = this.coachFilter();
-    if (coach === 'MINE') parts.push('your group');
-    if (coach === 'UNASSIGNED') parts.push('unassigned apprentices');
-    return parts.length ? parts.join(' · ') : null;
+    const specName = spec === 'ALL' ? null : (this.refs.specializationById().get(spec)?.name ?? null);
+    return describeScope(specName, this.coachFilter());
   });
 
   /** Specialization chips: only those present in the cohort, with live remaining counts. */
-  readonly specializationChips = computed(() => {
+  readonly specializationChips = computed<readonly SpecializationChip[]>(() => {
     const groups = new Map<Id, { specialization: Specialization; total: number; remaining: number }>();
     for (const e of this.entries()) {
       if (!e.specialization) continue;
@@ -275,7 +257,14 @@ export class AttendanceFacade {
         remaining: g.remaining + (e.bucket === 'NOT_HERE_YET' ? 1 : 0),
       });
     }
-    return [...groups.values()].sort((a, b) => a.specialization.name.localeCompare(b.specialization.name));
+    return [...groups.values()]
+      .sort((a, b) => a.specialization.name.localeCompare(b.specialization.name))
+      .map((g) => ({
+        specialization: g.specialization,
+        badge: g.remaining > 0 ? g.remaining : null,
+        done: g.remaining === 0,
+        hint: `${g.remaining} not here yet`,
+      }));
   });
 
   readonly groups = computed<readonly SweepGroup[]>(() => {
@@ -284,7 +273,7 @@ export class AttendanceFacade {
     const visible = this.scope().filter(
       (e) =>
         (e.bucket === bucket || (bucket === 'NOT_HERE_YET' && e.revealing)) &&
-        (!term || e.name.toLowerCase().includes(term) || e.apprentice.email.toLowerCase().includes(term)),
+        matchesSearch(term, e.name, e.apprentice.email),
     );
     const byGroup = new Map<string, SweepEntry[]>();
     for (const e of visible) {

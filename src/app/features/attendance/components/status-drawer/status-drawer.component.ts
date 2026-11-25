@@ -16,13 +16,28 @@ import {
   NOTE_MAX_LENGTH,
   REASON_LABELS,
   STATUS_LABELS,
+  type Apprentice,
+  type AttendanceMark,
   type AttendanceReason,
   type AttendanceStatus,
+  type Id,
+  type Specialization,
 } from '../../../../domain';
 import { AvatarComponent } from '../../../../shared/components/avatar/avatar.component';
 import { IconComponent } from '../../../../shared/components/icon/icon.component';
 import { STATUS_TONE } from '../../attendance-status.const';
-import type { MarkSnapshot, SweepEntry } from '../../data-access/attendance.facade';
+
+/** What the drawer edits: one apprentice's mark on one day. `SweepEntry` satisfies it structurally. */
+export interface MarkTarget {
+  readonly id: Id;
+  readonly name: string;
+  readonly apprentice: Pick<Apprentice, 'avatarUrl'>;
+  readonly specialization: Pick<Specialization, 'name'> | undefined;
+  readonly coachName: string | null;
+  readonly mark: AttendanceMark | null;
+  /** Set when editing a past day (shown in the header; reset becomes "Clear record"). */
+  readonly dateLabel?: string;
+}
 
 /**
  * Explicit status editor: P·L·A·E pills, 1-tap reason chips, optional note.
@@ -38,10 +53,10 @@ import type { MarkSnapshot, SweepEntry } from '../../data-access/attendance.faca
 })
 export class StatusDrawerComponent {
   /** Open while non-null. */
-  readonly entry = input<SweepEntry | null>(null);
+  readonly entry = input<MarkTarget | null>(null);
   /** Pre-selected status when opened from a shortcut (e.g. `E` key). */
   readonly preset = input<AttendanceStatus | null>(null);
-  readonly save = output<MarkSnapshot>();
+  readonly save = output<AttendanceMark>();
   readonly cleared = output<void>();
   readonly closed = output<void>();
 
@@ -53,7 +68,10 @@ export class StatusDrawerComponent {
   protected readonly noteMax = NOTE_MAX_LENGTH;
 
   // Form state re-seeds only when a *different* apprentice opens — live stream updates don't clobber edits.
-  private readonly openedId = computed(() => this.entry()?.id ?? null);
+  private readonly openedId = computed(() => {
+    const e = this.entry();
+    return e ? `${e.id}|${e.dateLabel ?? ''}` : null;
+  });
   protected readonly status = linkedSignal<string | null, AttendanceStatus | null>({
     source: this.openedId,
     computation: () => untracked(this.preset) ?? untracked(this.entry)?.mark?.status ?? null,

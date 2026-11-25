@@ -16,6 +16,9 @@
         <div class="min-w-0 flex-1">
           <h2 id="status-drawer-title" class="truncate text-base font-semibold">{{ e.name }}</h2>
           <p class="truncate text-xs text-fg-muted">
+            @if (e.dateLabel) {
+              <span class="font-semibold text-accent">{{ e.dateLabel }}</span> ·
+            }
             {{ e.specialization?.name ?? 'No specialization' }} · {{ e.coachName ?? 'Unassigned' }}
           </p>
         </div>
@@ -96,7 +99,7 @@
       <footer class="flex flex-col-reverse gap-2 border-t border-line pt-4 sm:flex-row sm:items-center">
         @if (e.mark) {
           <button type="button" class="btn btn-ghost sm:mr-auto" (click)="resetToWaiting()">
-            <ap-icon name="undo" [size]="16" /> Reset to Not Here Yet
+            <ap-icon name="undo" [size]="16" /> {{ e.dateLabel ? 'Clear record' : 'Reset to Not Here Yet' }}
           </button>
         }
         <button type="submit" class="btn btn-primary sm:ml-auto sm:min-w-32" [disabled]="!canSave()">

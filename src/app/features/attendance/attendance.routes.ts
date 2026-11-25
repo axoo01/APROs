@@ -6,4 +6,9 @@ export const ATTENDANCE_ROUTES: Routes = [
     title: 'Attendance · APROs',
     loadComponent: () => import('./pages/attendance/attendance.page').then((m) => m.AttendancePage),
   },
+  {
+    path: 'log',
+    title: 'Attendance log · APROs',
+    loadComponent: () => import('./pages/attendance-log/attendance-log.page').then((m) => m.AttendanceLogPage),
+  },
 ];
