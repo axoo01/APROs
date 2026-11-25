@@ -1,9 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
-import { PATTERN_THRESHOLDS, REASON_LABELS, STATUS_LABELS, type AttendanceStatus } from '../../../../domain';
+import { REASON_LABELS, STATUS_LABELS, type AttendanceStatus } from '../../../../domain';
 import { AvatarComponent } from '../../../../shared/components/avatar/avatar.component';
 import { IconComponent } from '../../../../shared/components/icon/icon.component';
 import { LongPressDirective } from '../../../../shared/directives/long-press.directive';
 import { colorTagVar } from '../../../../shared/utils/color-tag.util';
+import { patternFlags } from '../../attendance-pattern.const';
 import { STATUS_KEYS, STATUS_TONE } from '../../attendance-status.const';
 import type { SweepEntry } from '../../data-access/attendance.facade';
 
@@ -47,28 +48,8 @@ export class ApprenticeCardComponent {
     return coachName ?? 'Unassigned';
   });
 
-  /** Recurring-pattern pills (thresholds live in the domain). */
-  protected readonly flags = computed(() => {
-    const { absenceStreak, latesThisWeek } = this.entry().pattern;
-    const flags: { key: string; label: string; description: string; tone: string }[] = [];
-    if (absenceStreak >= PATTERN_THRESHOLDS.absenceStreak) {
-      flags.push({
-        key: 'absent',
-        label: `${absenceStreak}d absent`,
-        description: `Absent ${absenceStreak} working days in a row`,
-        tone: 'bg-status-a-soft text-status-a ring-status-a/35',
-      });
-    }
-    if (latesThisWeek >= PATTERN_THRESHOLDS.latesThisWeek) {
-      flags.push({
-        key: 'late',
-        label: `${latesThisWeek}× late this wk`,
-        description: `Late ${latesThisWeek} times this week`,
-        tone: 'bg-status-l-soft text-warning ring-status-l/50',
-      });
-    }
-    return flags;
-  });
+  /** Recurring-pattern pills (shared wording with the status drawer). */
+  protected readonly flags = computed(() => patternFlags(this.entry().pattern));
 
   protected readonly ariaLabel = computed(() => {
     const { name, mark } = this.entry();

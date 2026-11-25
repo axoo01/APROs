@@ -1,17 +1,6 @@
-<a
-  routerLink="/attendance"
-  class="-ml-2 mb-1 inline-flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-sm font-medium text-fg-muted transition-colors hover:text-fg"
->
-  <ap-icon name="arrow-right" [size]="16" class="rotate-180" /> Today's Sweep
-</a>
-
-<ap-page-header
-  title="Attendance Log"
-  [subtitle]="(f.cohort()?.displayName ?? '') + (f.scopeLabel() ? ' · ' + f.scopeLabel() : '')"
-/>
+<ap-page-header eyebrow="Today's Sweep" eyebrowLink="/attendance" title="Attendance Log" [subtitle]="subtitle()" />
 
 <ap-log-toolbar
-  class="mt-5 block"
   [preset]="f.preset()"
   [day]="f.day()"
   [minDay]="f.minDay()"
@@ -23,19 +12,6 @@
   (step)="f.stepDay($event)"
   (export)="export()"
 />
-
-<p class="mt-3 flex items-center gap-2 text-sm text-fg-muted" aria-live="polite">
-  <ap-icon name="calendar-check" [size]="16" />
-  @if (firstDay(); as start) {
-    @if (start === lastDay()) {
-      {{ start | date: 'EEEE, d MMMM y' }}
-    } @else {
-      {{ start | date: 'EEE d MMM' }} – {{ lastDay() | date: 'EEE d MMM' }} · {{ f.days().length }} working days
-    }
-  } @else {
-    No working days in this range
-  }
-</p>
 
 <ap-kpi-strip
   class="mt-4 block"

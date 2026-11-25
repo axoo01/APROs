@@ -27,6 +27,18 @@
         </button>
       </header>
 
+      @if (flags().length) {
+        <ul class="-mt-1 flex flex-col gap-2" aria-label="Attendance patterns">
+          @for (f of flags(); track f.key) {
+            <li class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm ring-1 ring-inset" [class]="f.tone">
+              <ap-icon [name]="f.icon" [size]="16" [strokeWidth]="2.5" class="shrink-0" />
+              <span class="font-semibold">{{ f.label }}</span>
+              <span class="min-w-0 truncate opacity-90">· {{ f.description }}</span>
+            </li>
+          }
+        </ul>
+      }
+
       <fieldset>
         <legend class="mb-2 text-xs font-semibold uppercase tracking-wider text-fg-subtle">Status</legend>
         <div class="grid grid-cols-4 gap-2">

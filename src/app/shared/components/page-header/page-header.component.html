@@ -1,6 +1,16 @@
 <div class="min-w-0">
   @if (eyebrow()) {
-    <p class="text-xs font-semibold uppercase tracking-[0.16em] text-accent">{{ eyebrow() }}</p>
+    @if (eyebrowLink(); as link) {
+      <a
+        [routerLink]="link"
+        class="group inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-accent transition-opacity hover:opacity-80"
+      >
+        <ap-icon name="arrow-right" [size]="14" [strokeWidth]="2.5" class="rotate-180 transition-transform group-hover:-translate-x-0.5" />
+        <span class="underline decoration-accent decoration-2 underline-offset-4">{{ eyebrow() }}</span>
+      </a>
+    } @else {
+      <p class="text-xs font-semibold uppercase tracking-[0.16em] text-accent">{{ eyebrow() }}</p>
+    }
   }
   <h1 class="mt-1 text-2xl font-semibold leading-tight sm:text-[1.75rem]">{{ title() }}</h1>
   @if (subtitle()) {

@@ -18,6 +18,7 @@ import {
   STATUS_LABELS,
   type Apprentice,
   type AttendanceMark,
+  type AttendancePattern,
   type AttendanceReason,
   type AttendanceStatus,
   type Id,
@@ -25,6 +26,7 @@ import {
 } from '../../../../domain';
 import { AvatarComponent } from '../../../../shared/components/avatar/avatar.component';
 import { IconComponent } from '../../../../shared/components/icon/icon.component';
+import { patternFlags } from '../../attendance-pattern.const';
 import { STATUS_TONE } from '../../attendance-status.const';
 
 /** What the drawer edits: one apprentice's mark on one day. `SweepEntry` satisfies it structurally. */
@@ -37,6 +39,8 @@ export interface MarkTarget {
   readonly mark: AttendanceMark | null;
   /** Set when editing a past day (shown in the header; reset becomes "Clear record"). */
   readonly dateLabel?: string;
+  /** Recurring absence / lateness as of that day — surfaced as a short notice. */
+  readonly pattern?: AttendancePattern;
 }
 
 /**
@@ -88,6 +92,8 @@ export class StatusDrawerComponent {
     source: this.openedId,
     computation: () => !!untracked(this.entry)?.mark?.note,
   });
+
+  protected readonly flags = computed(() => patternFlags(this.entry()?.pattern));
 
   protected readonly reasonRequired = computed(() => this.status() === 'E');
   protected readonly showReasons = computed(() => {

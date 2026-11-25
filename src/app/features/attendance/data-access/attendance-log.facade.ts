@@ -8,6 +8,7 @@ import {
   apprenticeDisplayName,
   attendanceId,
   can,
+  detectPattern,
   needsFollowUp,
   nextWorkingDay,
   previousWorkingDay,
@@ -310,7 +311,9 @@ export class AttendanceLogFacade {
   target(apprenticeId: Id, date: IsoDate): MarkTarget | null {
     const row = this.rowById().get(apprenticeId);
     if (!row) return null;
-    const r = this.recordById().get(attendanceId(apprenticeId, date));
+    const byId = this.recordById();
+    const r = byId.get(attendanceId(apprenticeId, date));
+    const cohort = this.cohort();
     return {
       id: row.id,
       name: row.name,
@@ -319,6 +322,9 @@ export class AttendanceLogFacade {
       coachName: row.coachName,
       mark: r ? { status: r.status, reason: r.reason, note: r.note } : null,
       dateLabel: formatDate(date, 'EEE, d MMM', this.locale),
+      pattern: cohort
+        ? detectPattern({ get: (d) => byId.get(attendanceId(apprenticeId, d))?.status }, date, cohort)
+        : undefined,
     };
   }
 

@@ -43,7 +43,7 @@
             [title]="f.description"
             aria-hidden="true"
           >
-            <ap-icon [name]="f.key === 'late' ? 'clock' : 'alert'" [size]="10" [strokeWidth]="2.5" />{{ f.label }}
+            <ap-icon [name]="f.icon" [size]="10" [strokeWidth]="2.5" />{{ f.label }}
           </span>
         }
         @if (entry().mark?.note) {

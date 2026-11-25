@@ -75,50 +75,48 @@ const USERS: readonly UserSeed[] = [
   { fullName: 'Axcel', email: 'axcel@apros.demo', role: 'COACH', title: 'Coach' },
 ];
 
-/** The live cohort's real roster: apprentice → coach (by the coach's seeded fullName). */
-const LIVE_ROSTER: readonly { readonly name: string; readonly coach: string }[] = [
-  { name: 'Aklile Seyoum Mamo', coach: 'Jamillah' },
-  { name: 'Aline Niyonizera', coach: 'Jamillah' },
-  { name: 'Dukundane Furaha Yves Derick', coach: 'Jamillah' },
-  { name: 'Erick Kanja', coach: 'Jamillah' },
-  { name: 'Innocent Bugingo', coach: 'Jamillah' },
-  { name: 'Iradukunda Toussaint', coach: 'Jamillah' },
-  { name: 'Irimaso Maurice', coach: 'Favor' },
-  { name: 'Mugabo Vedaste', coach: 'Favor' },
-  { name: 'Taylor Chongo', coach: 'Favor' },
-  { name: 'Victoire Ansima Ikuyo', coach: 'Favor' },
-  { name: 'Christine Umutoni', coach: 'Favor' },
-  { name: 'David Bonfils Kamanda', coach: 'Favor' },
-  { name: 'Fabrice Sheja', coach: 'Nelly' },
-  { name: 'Levy Imanzi', coach: 'Nelly' },
-  { name: 'Molo Munyansanga', coach: 'Nelly' },
-  { name: 'Olivier Kwizera', coach: 'Nelly' },
-  { name: 'Prince Dushimimana', coach: 'Nelly' },
-  { name: 'Umutoni Justine', coach: 'Nelly' },
-  { name: 'Amanuel Kebede', coach: 'Peggy' },
-  { name: 'Benjamin Ssempala', coach: 'Peggy' },
-  { name: 'Clement Nsengiyumva', coach: 'Peggy' },
-  { name: 'Kabera Clapton Gahenda', coach: 'Peggy' },
-  { name: 'Annick Ujeneza', coach: 'Peggy' },
-  { name: 'Kevine Uwisanga', coach: 'Peggy' },
-  { name: 'Emery Bashige', coach: 'Axcel' },
-  { name: 'Igizeneza Serge Benit', coach: 'Axcel' },
-  { name: 'Jesephus Mupanda', coach: 'Axcel' },
-  { name: 'Mugwaneza Manzi Audace', coach: 'Axcel' },
-  { name: 'Atete Shina Mpeta', coach: 'Axcel' },
-  { name: 'Nancy Kamikazi', coach: 'Axcel' },
+/** The live cohort's real roster: apprentice → coach (seeded fullName) and specialization code. */
+const LIVE_ROSTER: readonly { readonly name: string; readonly coach: string; readonly spec: string }[] = [
+  { name: 'Aklile Seyoum Mamo', coach: 'Jamillah', spec: 'PB' },
+  { name: 'Aline Niyonizera', coach: 'Jamillah', spec: 'PB' },
+  { name: 'Dukundane Furaha Yves Derick', coach: 'Jamillah', spec: 'PB' },
+  { name: 'Erick Kanja', coach: 'Jamillah', spec: 'PB' },
+  { name: 'Innocent Bugingo', coach: 'Jamillah', spec: 'PB' },
+  { name: 'Iradukunda Toussaint', coach: 'Jamillah', spec: 'PB' },
+  { name: 'Irimaso Maurice', coach: 'Favor', spec: 'PB' },
+  { name: 'Mugabo Vedaste', coach: 'Favor', spec: 'PB' },
+  { name: 'Taylor Chongo', coach: 'Favor', spec: 'PB' },
+  { name: 'Victoire Ansima Ikuyo', coach: 'Favor', spec: 'PB' },
+  { name: 'Christine Umutoni', coach: 'Favor', spec: 'DE' },
+  { name: 'David Bonfils Kamanda', coach: 'Favor', spec: 'DE' },
+  { name: 'Fabrice Sheja', coach: 'Nelly', spec: 'DE' },
+  { name: 'Levy Imanzi', coach: 'Nelly', spec: 'DE' },
+  { name: 'Molo Munyansanga', coach: 'Nelly', spec: 'DE' },
+  { name: 'Olivier Kwizera', coach: 'Nelly', spec: 'DE' },
+  { name: 'Prince Dushimimana', coach: 'Nelly', spec: 'DE' },
+  { name: 'Umutoni Justine', coach: 'Nelly', spec: 'DE' },
+  { name: 'Amanuel Kebede', coach: 'Peggy', spec: 'DO' },
+  { name: 'Benjamin Ssempala', coach: 'Peggy', spec: 'DO' },
+  { name: 'Clement Nsengiyumva', coach: 'Peggy', spec: 'DO' },
+  { name: 'Kabera Clapton Gahenda', coach: 'Peggy', spec: 'DO' },
+  { name: 'Annick Ujeneza', coach: 'Peggy', spec: 'QA' },
+  { name: 'Kevine Uwisanga', coach: 'Peggy', spec: 'QA' },
+  { name: 'Emery Bashige', coach: 'Axcel', spec: 'JB' },
+  { name: 'Igizeneza Serge Benit', coach: 'Axcel', spec: 'JB' },
+  { name: 'Jesephus Mupanda', coach: 'Axcel', spec: 'JB' },
+  { name: 'Mugwaneza Manzi Audace', coach: 'Axcel', spec: 'JB' },
+  { name: 'Atete Shina Mpeta', coach: 'Axcel', spec: 'FS' },
+  { name: 'Nancy Kamikazi', coach: 'Axcel', spec: 'FS' },
 ];
 
-/** Specializations are spread evenly across the live roster (not given in the source list). */
-const LIVE_SPEC_CYCLE: readonly string[] = ['FE', 'BE', 'DE', 'DO', 'QA', 'UX'];
 
 const SPECIALIZATIONS: readonly { name: string; code: string; colorTag: ColorTag }[] = [
-  { name: 'Frontend Engineering', code: 'FE', colorTag: 'light-blue' },
-  { name: 'Backend Engineering (Java)', code: 'BE', colorTag: 'indigo' },
-  { name: 'Data Engineering', code: 'DE', colorTag: 'teal' },
-  { name: 'Cloud & DevOps', code: 'DO', colorTag: 'purple' },
-  { name: 'Quality Assurance', code: 'QA', colorTag: 'green' },
-  { name: 'Product Design (UI/UX)', code: 'UX', colorTag: 'pink' },
+  { name: 'Fullstack JS', code: 'FS', colorTag: 'light-blue' },
+  { name: 'QA', code: 'QA', colorTag: 'green' },
+  { name: 'Java BE', code: 'JB', colorTag: 'indigo' },
+  { name: 'DevOps', code: 'DO', colorTag: 'purple' },
+  { name: 'Python BE', code: 'PB', colorTag: 'yellow' },
+  { name: 'DE', code: 'DE', colorTag: 'teal' },
 ];
 
 interface CohortSeed {
@@ -141,17 +139,17 @@ const COHORTS: readonly CohortSeed[] = [
   {
     sequenceNumber: 1, phase1StartDate: '2026-02-02', phase1EndDate: '2026-04-24',
     phase2StartDate: '2026-05-04', phase2EndDate: '2026-08-21',
-    roster: { FE: 6, BE: 6, DE: 4, QA: 3, UX: 3 }, graduated: true, withdrawn: 0, unassigned: 0, withHistory: false,
+    roster: { FS: 6, JB: 6, DE: 4, QA: 3, PB: 3 }, graduated: true, withdrawn: 0, unassigned: 0, withHistory: false,
   },
   {
     sequenceNumber: 2, phase1StartDate: '2026-05-04', phase1EndDate: '2026-07-24',
     phase2StartDate: '2026-08-03', phase2EndDate: '2026-11-20',
-    roster: { FE: 6, BE: 6, DE: 4, DO: 4, QA: 4 }, graduated: true, withdrawn: 0, unassigned: 0, withHistory: false,
+    roster: { FS: 6, JB: 6, DE: 4, DO: 4, QA: 4 }, graduated: true, withdrawn: 0, unassigned: 0, withHistory: false,
   },
   {
     sequenceNumber: 3, phase1StartDate: '2026-08-03', phase1EndDate: '2026-10-23',
     phase2StartDate: '2026-11-02', phase2EndDate: '2027-02-19',
-    roster: { FE: 7, BE: 7, DE: 5, DO: 4, QA: 4, UX: 3 }, graduated: false, withdrawn: 1, unassigned: 0, withHistory: true,
+    roster: { FS: 7, JB: 7, DE: 5, DO: 4, QA: 4, PB: 3 }, graduated: false, withdrawn: 1, unassigned: 0, withHistory: true,
   },
   {
     sequenceNumber: 4, phase1StartDate: '2026-11-02', phase1EndDate: '2027-01-29',
@@ -234,9 +232,9 @@ export function createSeedDb(now: Date): DbSchema {
 
     if (c.live) {
       const coachByName = new Map(coaches.map((u) => [u.fullName, u.id]));
-      LIVE_ROSTER.forEach((entry, i) => {
+      LIVE_ROSTER.forEach((entry) => {
         const [first = entry.name, ...rest] = entry.name.split(' ');
-        const spec = specByCode.get(LIVE_SPEC_CYCLE[i % LIVE_SPEC_CYCLE.length]!);
+        const spec = specByCode.get(entry.spec);
         const coachId = coachByName.get(entry.coach);
         if (!spec || !coachId) throw new Error(`Bad live roster entry ${entry.name}`);
         usedNames.add(entry.name);

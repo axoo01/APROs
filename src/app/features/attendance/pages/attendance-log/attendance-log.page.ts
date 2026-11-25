@@ -1,6 +1,5 @@
-import { DatePipe } from '@angular/common';
-import { RouterLink } from '@angular/router';
-import { ChangeDetectionStrategy, Component, computed, inject, signal, viewChild } from '@angular/core';
+import { formatDate } from '@angular/common';
+import { ChangeDetectionStrategy, Component, LOCALE_ID, computed, inject, signal, viewChild } from '@angular/core';
 import type { AttendanceMark, IsoDate } from '../../../../domain';
 import { IconComponent } from '../../../../shared/components/icon/icon.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
@@ -20,8 +19,6 @@ import { AttendanceLogFacade } from '../../data-access/attendance-log.facade';
 @Component({
   selector: 'ap-attendance-log-page',
   imports: [
-    DatePipe,
-    RouterLink,
     IconComponent,
     PageHeaderComponent,
     AttendanceMatrixComponent,
@@ -49,8 +46,22 @@ export class AttendanceLogPage {
     return e ? this.f.target(e.apprenticeId, e.date) : null;
   });
 
-  protected readonly firstDay = computed(() => this.f.days()[0] ?? null);
-  protected readonly lastDay = computed(() => this.f.days().at(-1) ?? null);
+  private readonly locale = inject(LOCALE_ID);
+
+  /** Same shape as Today's Sweep: "<date or range> · <cohort>". */
+  protected readonly subtitle = computed(() => {
+    const days = this.f.days();
+    const first = days[0];
+    const last = days.at(-1);
+    const cohort = this.f.cohort()?.displayName ?? '';
+    const fmt = (d: string, pattern: string) => formatDate(d, pattern, this.locale);
+    const range = !first || !last
+      ? 'No working days in range'
+      : first === last
+        ? fmt(first, 'EEEE, d MMMM')
+        : `${fmt(first, 'EEE, d MMM')} – ${fmt(last, 'EEE, d MMM')} · ${days.length} working days`;
+    return cohort ? `${range} · ${cohort}` : range;
+  });
 
   protected edit(selection: CellSelection): void {
     this.editing.set(selection);
