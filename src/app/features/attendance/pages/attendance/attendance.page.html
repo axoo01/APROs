@@ -55,9 +55,11 @@
     </div>
     <p class="sr-only" aria-live="polite" aria-atomic="true">{{ liveSummary() }}</p>
 
-    <ap-sweep-filter-bar
+    <ap-roster-filter-bar
       class="mt-4 block"
       [chips]="f.specializationChips()"
+      [coaches]="f.coaches()"
+      [showMine]="f.showMine()"
       [search]="f.searchText()"
       [(spec)]="f.specFilter"
       [(coach)]="f.coachFilter"
@@ -136,6 +138,9 @@
         <ap-closeout-bar
           [remaining]="f.remaining().length"
           [total]="f.total()"
+          pendingLabel="not here"
+          outcome="Absent"
+          icon="user-x"
           (closeout)="closeoutOpen.set(true)"
         />
       </div>

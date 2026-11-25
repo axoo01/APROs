@@ -1,0 +1,121 @@
+<div class="card overflow-hidden">
+  <div class="overflow-x-auto overscroll-x-contain" #table>
+    <table class="w-full border-separate border-spacing-0 text-sm" [attr.aria-label]="label()">
+      <thead>
+        <tr>
+          <th
+            scope="col"
+            class="sticky left-0 z-20 min-w-[15rem] border-b border-line bg-surface px-4 py-3 text-left text-xs font-semibold text-fg-muted"
+          >
+            Apprentice
+          </th>
+          @for (d of days(); track d) {
+            <th
+              scope="col"
+              class="border-b border-line px-0.5 py-2 text-center text-[11px] font-medium"
+              [class.text-accent]="d === today()"
+              [class.text-fg-subtle]="d !== today()"
+            >
+              <span class="block">{{ d | date: 'EEE' }}</span>
+              <span class="block text-sm font-semibold" [class.text-fg]="d !== today()">{{ d | date: 'd' }}</span>
+            </th>
+          }
+          @for (m of metricLabels(); track m; let i = $index, first = $first) {
+            <th
+              scope="col"
+              class="sticky z-20 w-[4.75rem] border-b border-line bg-surface px-2 text-right text-xs font-semibold text-fg-muted"
+              [class.border-l]="first"
+              [style.right.rem]="metricRight(i)"
+            >
+              {{ m }}
+            </th>
+          }
+        </tr>
+      </thead>
+
+      @for (g of groups(); track g.key) {
+        <tbody>
+          <tr>
+            <th
+              scope="rowgroup"
+              [attr.colspan]="days().length + 1"
+              class="sticky left-0 z-10 border-b border-line bg-surface-2 px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider text-fg-subtle"
+            >
+              <span class="inline-flex items-center gap-2">
+                @if (g.color) {
+                  <span class="size-2 rounded-full" [style.background-color]="g.color" aria-hidden="true"></span>
+                }
+                {{ g.label }}
+                <span class="font-normal">· {{ g.rows.length }}</span>
+              </span>
+            </th>
+            @for (m of g.metrics; track $index; let i = $index, first = $first) {
+              <td
+                class="sticky z-10 border-b border-line bg-surface-2 px-2 text-right text-xs font-semibold tabular-nums"
+                [class.border-l]="first"
+                [style.right.rem]="metricRight(i)"
+              >
+                {{ m.text }}
+              </td>
+            }
+          </tr>
+          @for (r of g.rows; track r.id) {
+            <tr data-row class="group/row">
+              <th
+                scope="row"
+                class="sticky left-0 z-10 border-b border-line bg-surface px-4 py-1.5 text-left font-normal group-hover/row:bg-surface-2"
+              >
+                <span class="flex items-center gap-2">
+                  <span class="min-w-0 flex-1">
+                    <span class="block truncate font-medium">{{ r.name }}</span>
+                    <span class="block truncate text-xs text-fg-muted">{{ r.subtitle }}</span>
+                  </span>
+                  @if (r.flag) {
+                    <span class="shrink-0 rounded-full bg-status-a-soft px-1.5 py-px text-[10px] font-semibold text-status-a">
+                      {{ r.flag }}
+                    </span>
+                  }
+                </span>
+              </th>
+              @for (c of r.cells; track c.date; let ci = $index) {
+                <td class="border-b border-line px-0.5 py-1 text-center group-hover/row:bg-surface-2/60">
+                  <button
+                    type="button"
+                    class="relative mx-auto grid size-9 place-items-center rounded-lg text-xs font-semibold transition-transform hover:scale-110 focus-visible:scale-110"
+                    [class]="c.tone"
+                    [class.ring-2]="c.date === today()"
+                    [class.ring-accent]="c.date === today()"
+                    [attr.data-col]="ci"
+                    [tabindex]="tabStop() === key(r, ci) ? 0 : -1"
+                    [attr.aria-label]="r.name + ', ' + (c.date | date: 'EEEE d MMMM') + ': ' + c.description"
+                    [title]="c.description"
+                    (focus)="onFocus(r, ci)"
+                    (keydown)="onKey($event)"
+                    (click)="cellSelect.emit({ rowId: r.id, date: c.date })"
+                  >
+                    {{ c.text }}
+                    @if (c.marked) {
+                      <span class="absolute right-0.5 top-0.5 size-1.5 rounded-full bg-current opacity-60" aria-hidden="true"></span>
+                    }
+                  </button>
+                </td>
+              }
+              @for (m of r.metrics; track $index; let i = $index, first = $first) {
+                <td
+                  class="sticky z-10 border-b border-line bg-surface px-2 text-right tabular-nums group-hover/row:bg-surface-2"
+                  [class.border-l]="first"
+                  [class.font-semibold]="first"
+                  [class.text-fg-muted]="!first && !m.alert"
+                  [class.text-danger]="m.alert"
+                  [style.right.rem]="metricRight(i)"
+                >
+                  {{ m.text }}
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      }
+    </table>
+  </div>
+</div>

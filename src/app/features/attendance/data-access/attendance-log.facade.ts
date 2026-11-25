@@ -36,11 +36,26 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
 import { toCsv } from '../../../shared/utils/csv.util';
 import { errorMessage } from '../../../shared/utils/error-message.util';
 import { streamFor } from '../../../shared/utils/stream-for.util';
+import type { MatrixGroup } from '../../../shared/components/status-matrix/status-matrix.component';
+import { colorTagVar } from '../../../shared/utils/color-tag.util';
+import { cellDescription, cellTone } from '../attendance-cell.const';
 import type { MarkTarget } from '../components/status-drawer/status-drawer.component';
-import type { SpecializationChip } from '../components/sweep-filter-bar/sweep-filter-bar.component';
-import { describeScope, inRosterScope, matchesSearch, type CoachFilter, type SpecFilter } from './roster-scope.util';
+import type { SpecializationChip } from '../../../shared/components/roster-filter-bar/roster-filter-bar.component';
+import {
+  coachFilterLabel,
+  describeScope,
+  inRosterScope,
+  matchesSearch,
+  type CoachFilter,
+  type SpecFilter,
+} from '../../../shared/utils/roster-scope.util';
 
 const SEARCH_DEBOUNCE_MS = 150;
+
+/** KPI cards double as filter / rank toggles. */
+export type AttendanceKpi = 'ATTENDANCE' | 'PUNCTUALITY' | 'ABSENCES' | 'FOLLOW_UP';
+/** Attendance below this is highlighted in the matrix. */
+const AT_RISK_ATTENDANCE = 0.85;
 
 export interface LogCell {
   readonly date: IsoDate;
@@ -111,9 +126,11 @@ export class AttendanceLogFacade {
   // ── Filters ────────────────────────────────────────────────────────────────
   readonly preset = signal<LogPreset>('THIS_WEEK');
   private readonly pickedDay = signal<IsoDate | null>(null);
+  readonly coaches = this.refs.coachOptions;
+  readonly showMine = this.refs.currentUserIsCoach;
   readonly specFilter = signal<SpecFilter>('ALL');
   readonly coachFilter = signal<CoachFilter>('ALL');
-  readonly followUpOnly = signal(false);
+  readonly kpiFocus = signal<AttendanceKpi | null>(null);
   readonly searchText = signal('');
   private readonly search$ = new Subject<string>();
   private readonly searchTerm = toSignal(
@@ -199,12 +216,24 @@ export class AttendanceLogFacade {
       : this.coachScopeRows().filter((r) => r.apprentice.specializationId === spec);
   });
 
+  /** Search + KPI focus: rank lowest attendance / punctuality first, or filter absences / follow-up. */
   readonly visibleRows = computed(() => {
     const term = this.searchTerm();
-    const followUpOnly = this.followUpOnly();
-    return this.scopeRows().filter(
-      (r) => (!followUpOnly || r.followUp) && matchesSearch(term, r.name, r.apprentice.email),
-    );
+    const rows = this.scopeRows().filter((r) => matchesSearch(term, r.name, r.apprentice.email));
+    // Rows with no records in the window rank last.
+    const rate = (r: LogRow, pick: (s: AttendanceSummary) => number) => (r.summary.total ? pick(r.summary) : 2);
+    switch (this.kpiFocus()) {
+      case 'ATTENDANCE':
+        return [...rows].sort((a, b) => rate(a, (s) => s.attendanceRate) - rate(b, (s) => s.attendanceRate));
+      case 'PUNCTUALITY':
+        return [...rows].sort((a, b) => rate(a, (s) => s.punctualityRate) - rate(b, (s) => s.punctualityRate));
+      case 'ABSENCES':
+        return rows.filter((r) => r.summary.A > 0).sort((a, b) => b.summary.A - a.summary.A);
+      case 'FOLLOW_UP':
+        return rows.filter((r) => r.followUp);
+      default:
+        return rows;
+    }
   });
 
   readonly groups = computed<readonly LogGroup[]>(() => {
@@ -221,7 +250,38 @@ export class AttendanceLogFacade {
         rows,
         summary: summarizeAttendance(rows.flatMap((r) => recordsOf(r.cells))),
       }))
-      .sort((a, b) => (a.specialization?.name ?? '~').localeCompare(b.specialization?.name ?? '~'));
+      .sort((a, b) => this.groupRank(a, b) || (a.specialization?.name ?? '~').localeCompare(b.specialization?.name ?? '~'));
+  });
+
+  /** Shared status-matrix view model (desktop matrix + phone cards). */
+  readonly matrixGroups = computed<readonly MatrixGroup[]>(() => {
+    const pct = (rate: number) => `${Math.round(rate * 100)}%`;
+    return this.groups().map((g) => ({
+      key: g.specialization?.id ?? 'none',
+      label: g.specialization?.name ?? 'No specialization',
+      color: g.specialization ? colorTagVar(g.specialization.colorTag) : null,
+      metrics: [{ text: pct(g.summary.attendanceRate) }, { text: pct(g.summary.punctualityRate) }],
+      rows: g.rows.map((r) => ({
+        id: r.id,
+        name: r.name,
+        subtitle: r.coachName ?? 'Unassigned',
+        flag: r.followUp ? 'Follow up' : null,
+        metrics: r.summary.total
+          ? [
+              { text: pct(r.summary.attendanceRate), alert: r.summary.attendanceRate < AT_RISK_ATTENDANCE },
+              { text: pct(r.summary.punctualityRate) },
+            ]
+          : [{ text: '—' }, { text: '—' }],
+        cells: r.cells.map((c) => ({
+          date: c.date,
+          empty: c.record === null,
+          text: c.record?.status ?? '·',
+          tone: cellTone(c.record),
+          description: cellDescription(c.record) + (c.recorder ? ` · by ${c.recorder}` : ''),
+          marked: !!c.record?.note || (!!c.record?.reason && c.record.status !== 'P'),
+        })),
+      })),
+    }));
   });
 
   readonly rowById = computed(() => new Map(this.coachScopeRows().map((r) => [r.id, r])));
@@ -279,10 +339,15 @@ export class AttendanceLogFacade {
   readonly scopeLabel = computed(() => {
     const spec = this.specFilter();
     const specName = spec === 'ALL' ? null : (this.refs.specializationById().get(spec)?.name ?? null);
-    return describeScope(specName, this.coachFilter());
+    return describeScope(specName, coachFilterLabel(this.coachFilter(), this.coaches()));
   });
 
   // ── Filter commands ────────────────────────────────────────────────────────
+  /** KPI cards toggle: clicking the active one clears it. */
+  toggleKpi(kpi: AttendanceKpi): void {
+    this.kpiFocus.update((current) => (current === kpi ? null : kpi));
+  }
+
   setSearch(text: string): void {
     this.searchText.set(text);
     this.search$.next(text);
@@ -377,6 +442,20 @@ export class AttendanceLogFacade {
   }
 
   // ── Internals ──────────────────────────────────────────────────────────────
+  /** While a ranking KPI is active, specializations are ordered worst-first too. */
+  private groupRank(a: LogGroup, b: LogGroup): number {
+    switch (this.kpiFocus()) {
+      case 'ATTENDANCE':
+        return a.summary.attendanceRate - b.summary.attendanceRate;
+      case 'PUNCTUALITY':
+        return a.summary.punctualityRate - b.summary.punctualityRate;
+      case 'ABSENCES':
+        return b.summary.A - a.summary.A;
+      default:
+        return 0;
+    }
+  }
+
   private workingDays(w: DateWindow): IsoDate[] {
     const c = this.cohort();
     if (!c) return [];

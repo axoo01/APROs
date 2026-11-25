@@ -18,7 +18,7 @@
             type="button"
             class="flex w-full min-h-16 items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-surface-2/60"
             [attr.aria-label]="r.name + ', ' + (rec ? statusLabels[rec.status] : 'no record') + '. Edit'"
-            (click)="cellSelect.emit({ apprenticeId: r.id, date: day() })"
+            (click)="cellSelect.emit({ rowId: r.id, date: day() })"
           >
             <ap-avatar [name]="r.name" [seed]="r.id" [src]="r.apprentice.avatarUrl" [size]="40" />
             <span class="min-w-0 flex-1">

@@ -22,6 +22,11 @@ export const routes: Routes = [
         loadChildren: () => import('./features/attendance/attendance.routes').then((m) => m.ATTENDANCE_ROUTES),
       },
       {
+        path: 'coaching',
+        canMatch: [permissionGuard('eod.record')],
+        loadChildren: () => import('./features/coaching/coaching.routes').then((m) => m.COACHING_ROUTES),
+      },
+      {
         path: 'dashboard',
         canMatch: [permissionGuard('dashboard.view')],
         loadChildren: () => import('./features/dashboard/dashboard.routes').then((m) => m.DASHBOARD_ROUTES),

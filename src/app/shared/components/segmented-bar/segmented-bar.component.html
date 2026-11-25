@@ -1,0 +1,5 @@
+<div class="flex h-2.5 w-full gap-px overflow-hidden rounded-full bg-surface-2" role="img" [attr.aria-label]="label()">
+  @for (p of parts(); track p.key) {
+    <span class="h-full transition-[width] duration-500 ease-[var(--ease-out-quart)]" [class]="p.tone" [style.width.%]="p.pct" [title]="p.label + ': ' + p.value"></span>
+  }
+</div>

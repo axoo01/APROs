@@ -4,15 +4,17 @@ import type { AttendanceMark, IsoDate } from '../../../../domain';
 import { IconComponent } from '../../../../shared/components/icon/icon.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { ToastService } from '../../../../shared/components/toast/toast.service';
+import { DateScopeToolbarComponent } from '../../../../shared/components/date-scope-toolbar/date-scope-toolbar.component';
+import { StatusCardListComponent } from '../../../../shared/components/status-card-list/status-card-list.component';
+import {
+  StatusMatrixComponent,
+  type MatrixSelection,
+} from '../../../../shared/components/status-matrix/status-matrix.component';
 import { downloadFile } from '../../../../shared/utils/download.util';
-import type { CellSelection } from '../../attendance-cell.const';
-import { AttendanceMatrixComponent } from '../../components/attendance-matrix/attendance-matrix.component';
 import { DayListComponent } from '../../components/day-list/day-list.component';
 import { KpiStripComponent } from '../../components/kpi-strip/kpi-strip.component';
-import { LogCardListComponent } from '../../components/log-card-list/log-card-list.component';
-import { LogToolbarComponent } from '../../components/log-toolbar/log-toolbar.component';
 import { StatusDrawerComponent } from '../../components/status-drawer/status-drawer.component';
-import { SweepFilterBarComponent } from '../../components/sweep-filter-bar/sweep-filter-bar.component';
+import { RosterFilterBarComponent } from '../../../../shared/components/roster-filter-bar/roster-filter-bar.component';
 import { AttendanceLogFacade } from '../../data-access/attendance-log.facade';
 
 /** Past days & trends: KPIs for the chosen window, matrix (or single-day list), retro edits, CSV export. */
@@ -21,13 +23,13 @@ import { AttendanceLogFacade } from '../../data-access/attendance-log.facade';
   imports: [
     IconComponent,
     PageHeaderComponent,
-    AttendanceMatrixComponent,
+    DateScopeToolbarComponent,
     DayListComponent,
     KpiStripComponent,
-    LogCardListComponent,
-    LogToolbarComponent,
+    StatusCardListComponent,
     StatusDrawerComponent,
-    SweepFilterBarComponent,
+    StatusMatrixComponent,
+    RosterFilterBarComponent,
   ],
   providers: [AttendanceLogFacade],
   templateUrl: './attendance-log.page.html',
@@ -38,12 +40,12 @@ import { AttendanceLogFacade } from '../../data-access/attendance-log.facade';
 export class AttendanceLogPage {
   protected readonly f = inject(AttendanceLogFacade);
   private readonly toasts = inject(ToastService);
-  private readonly filterBar = viewChild.required(SweepFilterBarComponent);
+  private readonly filterBar = viewChild.required(RosterFilterBarComponent);
 
-  protected readonly editing = signal<CellSelection | null>(null);
+  protected readonly editing = signal<MatrixSelection | null>(null);
   protected readonly editTarget = computed(() => {
     const e = this.editing();
-    return e ? this.f.target(e.apprenticeId, e.date) : null;
+    return e ? this.f.target(e.rowId, e.date) : null;
   });
 
   private readonly locale = inject(LOCALE_ID);
@@ -63,7 +65,7 @@ export class AttendanceLogPage {
     return cohort ? `${range} · ${cohort}` : range;
   });
 
-  protected edit(selection: CellSelection): void {
+  protected edit(selection: MatrixSelection): void {
     this.editing.set(selection);
   }
 
@@ -97,6 +99,6 @@ export class AttendanceLogPage {
 
   private apply(mark: AttendanceMark | null): void {
     const e = this.editing();
-    if (e) this.f.setMark(e.apprenticeId, e.date, mark);
+    if (e) this.f.setMark(e.rowId, e.date, mark);
   }
 }

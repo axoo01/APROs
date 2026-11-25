@@ -1,0 +1,31 @@
+:host {
+  display: block;
+}
+
+.sweep-enter {
+  animation: sweep-enter 220ms var(--ease-out-quart);
+}
+
+/* Swept card: lift, shrink and fade toward its new bucket. */
+.sweep-leave {
+  animation: sweep-leave 260ms var(--ease-out-quart) forwards;
+  pointer-events: none;
+}
+
+@keyframes sweep-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes sweep-leave {
+  to {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.94);
+  }
+}

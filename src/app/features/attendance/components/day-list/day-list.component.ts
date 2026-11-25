@@ -5,7 +5,7 @@ import { AvatarComponent } from '../../../../shared/components/avatar/avatar.com
 import { IconComponent } from '../../../../shared/components/icon/icon.component';
 import { colorTagVar } from '../../../../shared/utils/color-tag.util';
 import { STATUS_TONE } from '../../attendance-status.const';
-import type { CellSelection } from '../../attendance-cell.const';
+import type { MatrixSelection } from '../../../../shared/components/status-matrix/status-matrix.component';
 import type { LogGroup } from '../../data-access/attendance-log.facade';
 
 /** Single-day view: each apprentice's status, reason/note and who recorded it. Tap a row to edit. */
@@ -19,7 +19,7 @@ import type { LogGroup } from '../../data-access/attendance-log.facade';
 export class DayListComponent {
   readonly groups = input.required<readonly LogGroup[]>();
   readonly day = input.required<IsoDate>();
-  readonly cellSelect = output<CellSelection>();
+  readonly cellSelect = output<MatrixSelection>();
 
   protected readonly statusLabels = STATUS_LABELS;
   protected readonly reasonLabels = REASON_LABELS;

@@ -1,6 +1,16 @@
-import type { Apprentice, AttendanceRecord, Cohort, EntityTable, IsoDateTime, Specialization, User } from '../../domain';
+import {
+  emptyTable,
+  type Apprentice,
+  type AttendanceRecord,
+  type Cohort,
+  type EntityTable,
+  type EodPacingRecord,
+  type IsoDateTime,
+  type Specialization,
+  type User,
+} from '../../domain';
 
-export const DB_SCHEMA_VERSION = 1;
+export const DB_SCHEMA_VERSION = 2;
 export const DB_STORAGE_KEY = 'apros.db';
 
 export interface DbSchema {
@@ -11,11 +21,14 @@ export interface DbSchema {
   readonly cohorts: EntityTable<Cohort>;
   readonly apprentices: EntityTable<Apprentice>;
   readonly attendance: EntityTable<AttendanceRecord>;
+  /** Since v2. */
+  readonly eodPacing: EntityTable<EodPacingRecord>;
 }
 
 export type DbTableKey = Exclude<keyof DbSchema, 'schemaVersion' | 'seededAt'>;
 
-const TABLE_KEYS: readonly DbTableKey[] = ['users', 'specializations', 'cohorts', 'apprentices', 'attendance'];
+/** Tables every stored version has (v1). Newer tables are added by migrations, so they aren't required here. */
+const BASE_TABLE_KEYS: readonly DbTableKey[] = ['users', 'specializations', 'cohorts', 'apprentices', 'attendance'];
 
 function isTable(value: unknown): boolean {
   if (typeof value !== 'object' || value === null) return false;
@@ -27,14 +40,14 @@ function isTable(value: unknown): boolean {
 export function isDbSchema(value: unknown): value is DbSchema {
   if (typeof value !== 'object' || value === null) return false;
   const db = value as Record<string, unknown>;
-  return typeof db['schemaVersion'] === 'number' && TABLE_KEYS.every((k) => isTable(db[k]));
+  return typeof db['schemaVersion'] === 'number' && BASE_TABLE_KEYS.every((k) => isTable(db[k]));
 }
 
-/**
- * Forward migrations keyed by the version they upgrade FROM.
- * Add `1: (db) => ({ ...db, schemaVersion: 2, newTable: emptyTable() })` when the schema evolves.
- */
-export const MIGRATIONS: Readonly<Record<number, (db: DbSchema) => DbSchema>> = {};
+/** Forward migrations keyed by the version they upgrade FROM. */
+export const MIGRATIONS: Readonly<Record<number, (db: DbSchema) => DbSchema>> = {
+  // v2: EOD pacing table (existing data is kept; history starts empty until "Reset Demo Data").
+  1: (db) => ({ ...db, schemaVersion: 2, eodPacing: emptyTable<EodPacingRecord>() }),
+};
 
 export function migrate(db: DbSchema): DbSchema | null {
   let current = db;

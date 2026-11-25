@@ -1,5 +1,7 @@
 import {
   absenceStreak,
+  behindStreak,
+  type EodStatus,
   attendanceId,
   isWeekend,
   latesThisWeek,
@@ -41,6 +43,10 @@ describe('createSeedDb', () => {
     expect(new Set(roster.map((a) => a.coachId)).size).toBe(5);
     expect(new Set(roster.map((a) => a.specializationId)).size).toBe(6);
     expect(roster.some((a) => a.firstName === 'Aklile' && a.lastName === 'Seyoum Mamo')).toBe(true);
+  });
+
+  it('assigns every apprentice to a coach', () => {
+    expect(apprentices.every((a) => a.coachId !== null)).toBe(true);
   });
 
   it('keeps referential integrity', () => {
@@ -100,6 +106,23 @@ describe('createSeedDb', () => {
     const days = new Set(selectAll(later.attendance).filter((r) => r.cohortId === c4.id).map((r) => r.date));
     expect(days.size).toBe(20);
     expect([...days].sort().at(-1)).toBe('2026-12-15');
+  });
+
+  it('seeds EOD pacing only on present days, with planted behind streaks', () => {
+    const wednesday = createSeedDb(new Date(2026, 10, 25, 10, 0, 0));
+    const c4 = selectAll(wednesday.cohorts).find((c) => c.code === '26-11-04')!;
+    const eod = selectAll(wednesday.eodPacing);
+    expect(eod.length).toBeGreaterThan(300);
+    for (const r of eod) expect(['P', 'L']).toContain(wednesday.attendance.entities[r.id]?.status);
+    expect(eod.some((r) => r.status === 'ON_PACE' && r.tag === 'GREAT_PROGRESS' && r.note)).toBe(true);
+
+    const byApprentice = new Map<string, Map<IsoDate, EodStatus>>();
+    for (const r of eod.filter((x) => x.cohortId === c4.id)) {
+      const m = byApprentice.get(r.apprenticeId) ?? new Map<IsoDate, EodStatus>();
+      byApprentice.set(r.apprenticeId, m.set(r.date, r.status));
+    }
+    const behind = [...byApprentice.values()].filter((m) => behindStreak(m, '2026-11-25', c4) >= 2);
+    expect(behind.length).toBeGreaterThanOrEqual(2);
   });
 
   it('stays well within localStorage limits', () => {

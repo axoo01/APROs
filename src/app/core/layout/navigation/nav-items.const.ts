@@ -11,6 +11,8 @@ export interface NavItem {
 
 export const NAV_ITEMS: readonly NavItem[] = [
   { label: 'Attendance', path: '/attendance', icon: 'calendar-check', permission: 'attendance.record' },
+  // `/coaching` redirects to Today's EOD; the item stays active across EOD, EOD log and Weekly Behavior.
+  { label: 'Coaching', path: '/coaching', icon: 'gauge', permission: 'eod.record' },
   { label: 'Dashboard', path: '/dashboard', icon: 'dashboard', permission: 'dashboard.view' },
   { label: 'Roster', path: '/roster', icon: 'users' },
   { label: 'Cohorts', path: '/cohorts', icon: 'layers', permission: 'cohort.create' },

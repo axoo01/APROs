@@ -1,0 +1,37 @@
+<section class="rounded-2xl border border-dashed border-line">
+  <button
+    type="button"
+    class="flex min-h-14 w-full items-center gap-3 px-4 text-left"
+    [attr.aria-expanded]="open()"
+    [attr.aria-controls]="panelId"
+    (click)="open.set(!open())"
+  >
+    <span class="grid size-8 shrink-0 place-items-center rounded-lg bg-surface-2 text-fg-subtle">
+      <ap-icon [name]="icon()" [size]="16" />
+    </span>
+    <span class="min-w-0 flex-1">
+      <span class="block text-sm font-semibold text-fg-muted">{{ title() }} ({{ entries().length }})</span>
+      @if (hint()) {
+        <span class="block truncate text-xs text-fg-subtle">{{ hint() }}</span>
+      }
+    </span>
+    <ap-icon name="chevron-down" [size]="18" class="shrink-0 text-fg-subtle transition-transform" [class.rotate-180]="open()" />
+  </button>
+  @if (open()) {
+    <ul [id]="panelId" class="grid gap-2.5 px-3 pb-3 sm:grid-cols-2 2xl:grid-cols-3 [animation:fade-up_180ms_var(--ease-out-quart)]">
+      @for (e of entries(); track e.id) {
+        <li>
+          <ap-eod-card
+            [entry]="e"
+            [muted]="true"
+            [disabled]="disabled()"
+            (tapped)="details.emit(e.id)"
+            (details)="details.emit(e.id)"
+            (note)="note.emit(e.id)"
+            (quickStatus)="details.emit(e.id)"
+          />
+        </li>
+      }
+    </ul>
+  }
+</section>

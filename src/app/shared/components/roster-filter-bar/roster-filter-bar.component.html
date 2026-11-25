@@ -1,0 +1,124 @@
+<div class="flex flex-col gap-3">
+  <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+    <label class="relative min-w-0 flex-1">
+      <span class="sr-only">Search apprentices</span>
+      <ap-icon
+        name="search"
+        [size]="18"
+        class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-fg-subtle"
+      />
+      <input
+        #searchInput
+        type="search"
+        class="field pl-10 pr-10"
+        placeholder="Search name or email"
+        autocomplete="off"
+        enterkeyhint="search"
+        aria-keyshortcuts="/"
+        [value]="search()"
+        (input)="onSearch($event)"
+        (keydown.escape)="clearSearch()"
+      />
+      @if (search()) {
+        <button
+          type="button"
+          class="absolute right-1 top-1/2 grid size-9 -translate-y-1/2 place-items-center rounded-lg text-fg-subtle hover:bg-surface-2 hover:text-fg"
+          aria-label="Clear search"
+          (click)="clearSearch()"
+        >
+          <ap-icon name="x" [size]="16" />
+        </button>
+      } @else {
+        <kbd
+          class="pointer-events-none absolute right-3 top-1/2 hidden -translate-y-1/2 rounded-md border border-line px-1.5 text-[11px] font-medium text-fg-subtle lg:block"
+          aria-hidden="true"
+          >/</kbd
+        >
+      }
+    </label>
+
+    <div class="flex items-center gap-2">
+      <div
+        role="radiogroup"
+        aria-label="Coach scope"
+        class="flex shrink-0 rounded-xl border border-line bg-surface-2/60 p-1"
+      >
+        <button
+          type="button"
+          role="radio"
+          [attr.aria-checked]="coach() === 'ALL'"
+          class="min-h-9 rounded-lg px-3 text-sm font-medium transition-colors"
+          [class]="
+            coach() === 'ALL' ? 'bg-surface text-fg shadow-sm' : 'text-fg-muted hover:text-fg'
+          "
+          (click)="coach.set('ALL')"
+        >
+          All
+        </button>
+        @if (showMine()) {
+          <button
+            type="button"
+            role="radio"
+            [attr.aria-checked]="coach() === 'MINE'"
+            class="min-h-9 rounded-lg px-3 text-sm font-medium transition-colors"
+            [class]="
+              coach() === 'MINE' ? 'bg-surface text-fg shadow-sm' : 'text-fg-muted hover:text-fg'
+            "
+            (click)="coach.set('MINE')"
+          >
+            Mine
+          </button>
+        }
+      </div>
+      <label class="min-w-0 flex-1 sm:w-48 sm:flex-none">
+        <span class="sr-only">Coach</span>
+        <select
+          class="field pr-8 text-sm font-medium"
+          [class.text-fg-muted]="!selectedCoach()"
+          (change)="onCoachSelect($event)"
+        >
+          <option value="" [selected]="!selectedCoach()">All coaches</option>
+          @for (c of coaches(); track c.id) {
+            <option [value]="c.id" [selected]="c.id === selectedCoach()">{{ c.name }}</option>
+          }
+        </select>
+      </label>
+    </div>
+  </div>
+
+  <div
+    class="no-scrollbar -mx-4 flex snap-x gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0"
+    role="group"
+    aria-label="Filter by specialization"
+  >
+    <button
+      type="button"
+      class="chip"
+      [attr.aria-pressed]="spec() === 'ALL'"
+      (click)="spec.set('ALL')"
+    >
+      All
+    </button>
+    @for (c of chips(); track c.specialization.id) {
+      <button
+        type="button"
+        class="chip"
+        [attr.aria-pressed]="spec() === c.specialization.id"
+        [attr.aria-label]="c.specialization.name + ', ' + c.hint"
+        (click)="spec.set(spec() === c.specialization.id ? 'ALL' : c.specialization.id)"
+      >
+        <span
+          class="size-2.5 rounded-full"
+          [style.background-color]="tagColor(c.specialization.colorTag)"
+          aria-hidden="true"
+        ></span>
+        {{ c.specialization.name }}
+        @if (c.badge !== null) {
+          <span class="chip-count">{{ c.badge }}</span>
+        } @else if (c.done) {
+          <ap-icon name="check" [size]="14" class="text-status-p" />
+        }
+      </button>
+    }
+  </div>
+</div>

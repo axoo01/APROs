@@ -23,6 +23,7 @@ src/app/
                data-access/<name>.facade.ts             signals read model / commands
                <feature>.routes.ts                      exports <FEATURE>_ROUTES
   shared/      components/<name>/<name>.component.{ts,html,css} · directives/*.directive.ts · pipes/ · utils/*.util.ts
+               (cross-feature building blocks: roster-filter-bar, status-matrix, status-card-list, closeout-bar, date-scope-toolbar)
   testing/     provideTestApp()/setupTestApp() — FixedClock, MemoryStorage, zero latency
   app.routes.ts  guards + lazy `loadChildren` per feature only
 styles/tokens.css  Brand ramps + semantic roles (light/dark/.theme-dark)
@@ -67,6 +68,12 @@ styles/tokens.css  Brand ramps + semantic roles (light/dark/.theme-dark)
   **Needs follow-up** (log window): ≥ 2 `A` or ≥ 3 `L`.
 - **Log windows** (`attendance-window.rules`): This Week = Mon→today · Last Week = Mon–Fri · Last 30 Days · Single Day;
   KPI deltas compare to the immediately preceding period of the same shape (a day → previous working day).
+- **EOD pacing** (`eod.rules`): one record per apprentice per working day (`ON_PACE` · `NEEDS_SUPPORT` · `BLOCKED`,
+  optional tag + note). Queue = today's `P`/`L`; `A`/`E` and not-checked-in are muted (override allowed).
+  Behind streak = consecutive NS/BL working days (today On Pace → 0, unrated past day breaks); pill at ≥ 2.
+  EOD log "Behind": longest consecutive NS/BL run in the window ≥ 2 (`longestBehindRun`). Today's EOD defaults to Mine
+  for a coach with a group. Log KPI cards toggle a filter/rank (worst first); click again to clear.
+- **Coach filter** (`shared/utils/roster-scope.util`): `ALL` · `MINE` · a coach id — every active apprentice has a coach.
 - **Non-working days:** weekends + `cohort.nonWorkingDays` block recording in production; **Demo Mode never blocks** (warns only).
 - Dates are local `YYYY-MM-DD` (`IsoDate`); timestamps ISO-8601. Inject `Clock` — never `new Date()` in domain/services.
 

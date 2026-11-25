@@ -1,25 +1,27 @@
-import { NgTemplateOutlet, PercentPipe } from '@angular/common';
+import { PercentPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { FOLLOW_UP_THRESHOLDS } from '../../../../domain';
 import { IconComponent, type IconName } from '../../../../shared/components/icon/icon.component';
-import type { Kpi, LogKpis } from '../../data-access/attendance-log.facade';
+import type { AttendanceKpi, Kpi, LogKpis } from '../../data-access/attendance-log.facade';
 
 type Kind = 'rate' | 'count';
 
 interface Tile {
-  readonly key: string;
+  readonly key: AttendanceKpi;
   readonly label: string;
   readonly kpi: Kpi;
   readonly kind: Kind;
   /** True when an increase is good (rates) — drives delta colour. */
   readonly higherIsBetter: boolean;
   readonly hint: string;
+  /** What tapping does: rank worst-first, or filter. */
+  readonly action: 'rank' | 'filter';
 }
 
-/** Four scoped KPI tiles with prior-period deltas. "Needs follow-up" doubles as a filter toggle. */
+/** Four scoped KPI tiles with prior-period deltas; each one toggles a rank (worst first) or filter. */
 @Component({
   selector: 'ap-kpi-strip',
-  imports: [NgTemplateOutlet, PercentPipe, IconComponent],
+  imports: [PercentPipe, IconComponent],
   templateUrl: './kpi-strip.component.html',
   styleUrl: './kpi-strip.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -27,25 +29,47 @@ interface Tile {
 export class KpiStripComponent {
   readonly kpis = input.required<LogKpis>();
   readonly priorLabel = input.required<string>();
-  readonly followUpOnly = input(false);
-  readonly toggleFollowUp = output<void>();
+  readonly active = input<AttendanceKpi | null>(null);
+  readonly kpiToggle = output<AttendanceKpi>();
 
   protected readonly tiles = computed<readonly Tile[]>(() => {
     const k = this.kpis();
     return [
-      { key: 'att', label: 'Attendance', kpi: k.attendance, kind: 'rate', higherIsBetter: true, hint: '(P+L) ÷ (P+L+A) · E is neutral' },
-      { key: 'punct', label: 'Punctuality', kpi: k.punctuality, kind: 'rate', higherIsBetter: true, hint: 'P ÷ (P+L)' },
-      { key: 'abs', label: 'Unexcused absences', kpi: k.absences, kind: 'count', higherIsBetter: false, hint: 'A marks in scope' },
       {
-        key: 'follow',
+        key: 'ATTENDANCE',
+        label: 'Attendance',
+        kpi: k.attendance,
+        kind: 'rate',
+        higherIsBetter: true,
+        hint: '(P+L) ÷ (P+L+A) · E is neutral',
+        action: 'rank',
+      },
+      { key: 'PUNCTUALITY', label: 'Punctuality', kpi: k.punctuality, kind: 'rate', higherIsBetter: true, hint: 'P ÷ (P+L)', action: 'rank' },
+      {
+        key: 'ABSENCES',
+        label: 'Unexcused absences',
+        kpi: k.absences,
+        kind: 'count',
+        higherIsBetter: false,
+        hint: 'A marks in scope',
+        action: 'filter',
+      },
+      {
+        key: 'FOLLOW_UP',
         label: 'Needs follow-up',
         kpi: k.followUp,
         kind: 'count',
         higherIsBetter: false,
         hint: `${FOLLOW_UP_THRESHOLDS.absences}+ absences or ${FOLLOW_UP_THRESHOLDS.lates}+ lates`,
+        action: 'filter',
       },
     ];
   });
+
+  protected actionHint(t: Tile): string {
+    if (this.active() === t.key) return t.action === 'rank' ? 'Lowest first · tap to clear' : 'Most first · tap to clear';
+    return t.action === 'rank' ? 'Tap to rank' : 'Tap to filter';
+  }
 
   protected deltaText(t: Tile): string {
     const d = t.kpi.delta;

@@ -20,12 +20,12 @@ import { copyText } from '../../../../shared/utils/clipboard.util';
 import { colorTagVar } from '../../../../shared/utils/color-tag.util';
 import { ApprenticeCardComponent, type CardTap } from '../../components/apprentice-card/apprentice-card.component';
 import { BucketTabsComponent } from '../../components/bucket-tabs/bucket-tabs.component';
-import { CloseoutBarComponent } from '../../components/closeout-bar/closeout-bar.component';
+import { CloseoutBarComponent } from '../../../../shared/components/closeout-bar/closeout-bar.component';
 import { CloseoutSheetComponent } from '../../components/closeout-sheet/closeout-sheet.component';
 import { DayPulseComponent } from '../../components/day-pulse/day-pulse.component';
 import { DaySummaryComponent } from '../../components/day-summary/day-summary.component';
 import { StatusDrawerComponent } from '../../components/status-drawer/status-drawer.component';
-import { SweepFilterBarComponent } from '../../components/sweep-filter-bar/sweep-filter-bar.component';
+import { RosterFilterBarComponent } from '../../../../shared/components/roster-filter-bar/roster-filter-bar.component';
 import { AttendanceFacade, type SweepEntry } from '../../data-access/attendance.facade';
 
 /** Height the docked closeout bar occupies, so toasts float above it. */
@@ -55,7 +55,7 @@ const EMPTY_COPY = {
     DayPulseComponent,
     DaySummaryComponent,
     StatusDrawerComponent,
-    SweepFilterBarComponent,
+    RosterFilterBarComponent,
   ],
   providers: [AttendanceFacade],
   templateUrl: './attendance.page.html',
@@ -89,7 +89,7 @@ export class AttendancePage {
   });
 
   private readonly list = viewChild<ElementRef<HTMLElement>>('list');
-  private readonly filterBar = viewChild.required(SweepFilterBarComponent);
+  private readonly filterBar = viewChild.required(RosterFilterBarComponent);
 
   constructor() {
     effect(() => this.toasts.bottomInset.set(this.showCloseout() ? CLOSEOUT_DOCK_PX : 0));

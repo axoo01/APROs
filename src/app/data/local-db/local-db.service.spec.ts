@@ -4,7 +4,7 @@ import { selectAll } from '../../domain';
 import { FixedClock } from '../../core/platform/clock.service';
 import { MemoryStorage } from '../../core/platform/key-value-storage.service';
 import { setupTestApp, TEST_NOW } from '../../testing/test-providers';
-import { DB_STORAGE_KEY, type DbSchema } from './db-schema.model';
+import { DB_SCHEMA_VERSION, DB_STORAGE_KEY, migrate, type DbSchema } from './db-schema.model';
 import { LocalDbService } from './local-db.service';
 
 const flush = () => new Promise((r) => setTimeout(r, 5));
@@ -20,7 +20,7 @@ describe('LocalDbService', () => {
     await setupTestApp({}, { clock: new FixedClock(TEST_NOW), storage });
     expect(TestBed.inject(LocalDbService).initOutcome()).toBe('seeded');
     const saved = JSON.parse(storage.getItem(DB_STORAGE_KEY)!) as DbSchema;
-    expect(saved.schemaVersion).toBe(1);
+    expect(saved.schemaVersion).toBe(DB_SCHEMA_VERSION);
     expect(saved.cohorts.ids.length).toBe(4);
   });
 
@@ -77,5 +77,21 @@ describe('LocalDbService', () => {
     expect(selectAll(db.snapshot().attendance)).toHaveLength(0);
     await db.resetToSeed();
     expect(selectAll(db.snapshot().attendance).length).toBeGreaterThan(1000);
+  });
+
+  it('migrates a v1 store forward, keeping data and adding the EOD table', () => {
+    const v1 = {
+      schemaVersion: 1,
+      seededAt: '2026-11-23T08:00:00.000Z',
+      users: { ids: [], entities: {} },
+      specializations: { ids: [], entities: {} },
+      cohorts: { ids: [], entities: {} },
+      apprentices: { ids: [], entities: {} },
+      attendance: { ids: ['x'], entities: { x: {} } },
+    } as unknown as DbSchema;
+    const migrated = migrate(v1);
+    expect(migrated?.schemaVersion).toBe(DB_SCHEMA_VERSION);
+    expect(migrated?.eodPacing).toEqual({ ids: [], entities: {} });
+    expect(migrated?.attendance.ids).toEqual(['x']);
   });
 });

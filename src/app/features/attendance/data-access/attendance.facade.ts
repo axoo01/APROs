@@ -26,19 +26,24 @@ import { CohortContextStore } from '../../../core/state/cohort-context.store';
 import { ReferenceDataStore } from '../../../core/state/reference-data.store';
 import { ApprenticeRepository } from '../../../data/ports/apprentice.repository';
 import { AttendanceRepository } from '../../../data/ports/attendance.repository';
-import type { SpecializationChip } from '../components/sweep-filter-bar/sweep-filter-bar.component';
+import type { SpecializationChip } from '../../../shared/components/roster-filter-bar/roster-filter-bar.component';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { errorMessage } from '../../../shared/utils/error-message.util';
 import { streamFor } from '../../../shared/utils/stream-for.util';
 import { formatDayReport } from './day-report.util';
-import { describeScope, inRosterScope, matchesSearch, type CoachFilter, type SpecFilter } from './roster-scope.util';
+import {
+  coachFilterLabel,
+  describeScope,
+  inRosterScope,
+  matchesSearch,
+  type CoachFilter,
+  type SpecFilter,
+} from '../../../shared/utils/roster-scope.util';
 
 /** How long a just-marked card lingers in "Not Here Yet" — a second tap inside this window upgrades P → L. */
 export const REVEAL_MS = 650;
 const SEARCH_DEBOUNCE_MS = 150;
 const UNDO_DEPTH = 20;
-
-export type { CoachFilter, SpecFilter } from './roster-scope.util';
 
 /** The mutable part of a day record — what a write sets and what undo restores. */
 export type MarkSnapshot = AttendanceMark;
@@ -114,6 +119,8 @@ export class AttendanceFacade {
 
   // ── Filters ────────────────────────────────────────────────────────────────
   readonly activeBucket = signal<AttendanceBucket>('NOT_HERE_YET');
+  readonly coaches = this.refs.coachOptions;
+  readonly showMine = this.refs.currentUserIsCoach;
   readonly specFilter = signal<SpecFilter>('ALL');
   readonly coachFilter = signal<CoachFilter>('ALL');
   readonly searchText = signal('');
@@ -242,7 +249,7 @@ export class AttendanceFacade {
   readonly scopeLabel = computed(() => {
     const spec = this.specFilter();
     const specName = spec === 'ALL' ? null : (this.refs.specializationById().get(spec)?.name ?? null);
-    return describeScope(specName, this.coachFilter());
+    return describeScope(specName, coachFilterLabel(this.coachFilter(), this.coaches()));
   });
 
   /** Specialization chips: only those present in the cohort, with live remaining counts. */

@@ -1,4 +1,4 @@
-import { REASON_LABELS, STATUS_LABELS, type AttendanceRecord, type Id, type IsoDate } from '../../domain';
+import { REASON_LABELS, STATUS_LABELS, type AttendanceRecord } from '../../domain';
 
 /** Log cell colours: A is solid so absences pop when scanning a matrix; others stay soft. */
 export function cellTone(record: AttendanceRecord | null): string {
@@ -21,9 +21,4 @@ export function cellDescription(record: AttendanceRecord | null): string {
   if (!record) return 'No record';
   const parts = [STATUS_LABELS[record.status], record.reason ? REASON_LABELS[record.reason] : null].filter(Boolean);
   return parts.join(' · ') + (record.note ? ` — ${record.note}` : '');
-}
-
-export interface CellSelection {
-  readonly apprenticeId: Id;
-  readonly date: IsoDate;
 }

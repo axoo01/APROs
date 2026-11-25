@@ -20,9 +20,17 @@ export class ReferenceDataStore {
     () => new Map<Id, Specialization>(this.specializations().map((s) => [s.id, s])),
   );
   readonly coaches = computed(() => this.users().filter((u) => u.role === 'COACH' && u.isActive));
+  /** Coach picker options (id + display name), alphabetical. */
+  readonly coachOptions = computed(() =>
+    this.coaches()
+      .map((u) => ({ id: u.id, name: u.fullName }))
+      .sort((a, b) => a.name.localeCompare(b.name)),
+  );
 
   readonly currentUser = computed(() => {
     const s = this.auth.session();
     return s ? (this.userById().get(s.userId) ?? null) : null;
   });
+  /** The signed-in user coaches apprentices (drives the "Mine" filter). */
+  readonly currentUserIsCoach = computed(() => this.currentUser()?.role === 'COACH');
 }

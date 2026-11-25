@@ -9,5 +9,6 @@ export * from './rules/attendance-metrics.rules';
 export * from './rules/attendance-validation.rules';
 export * from './rules/attendance-patterns.rules';
 export * from './rules/attendance-window.rules';
+export * from './rules/eod.rules';
 export * from './rules/permissions.rules';
 export * from './utils/entity-table.util';

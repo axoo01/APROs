@@ -1,6 +1,7 @@
 import {
   addDays,
   attendanceId,
+  eodId,
   defaultCohortDisplayName,
   buildCohortCode,
   isWithin,
@@ -16,6 +17,9 @@ import {
   type AttendanceStatus,
   type Cohort,
   type ColorTag,
+  type EodPacingRecord,
+  type EodStatus,
+  type EodTag,
   type Id,
   type IsoDate,
   type Role,
@@ -29,6 +33,7 @@ import { Prng } from './prng.util';
 const STRUCTURE_SEED = 0xa9_2026;
 const HISTORY_SEED = 0x11_0426;
 const PATTERN_SEED = 0x57_4eaf;
+const EOD_SEED = 0xe0_d2026;
 
 /** The live demo cohort's history covers (at most) the last 4 weeks of working days before today. */
 export const LIVE_HISTORY_WORKING_DAYS = 20;
@@ -129,7 +134,6 @@ interface CohortSeed {
   readonly roster: Readonly<Record<string, number>>;
   readonly graduated: boolean;
   readonly withdrawn: number;
-  readonly unassigned: number;
   readonly withHistory: boolean;
   /** The cohort demoed live: real roster, recent-window history + planted patterns. */
   readonly live?: boolean;
@@ -139,22 +143,22 @@ const COHORTS: readonly CohortSeed[] = [
   {
     sequenceNumber: 1, phase1StartDate: '2026-02-02', phase1EndDate: '2026-04-24',
     phase2StartDate: '2026-05-04', phase2EndDate: '2026-08-21',
-    roster: { FS: 6, JB: 6, DE: 4, QA: 3, PB: 3 }, graduated: true, withdrawn: 0, unassigned: 0, withHistory: false,
+    roster: { FS: 6, JB: 6, DE: 4, QA: 3, PB: 3 }, graduated: true, withdrawn: 0, withHistory: false,
   },
   {
     sequenceNumber: 2, phase1StartDate: '2026-05-04', phase1EndDate: '2026-07-24',
     phase2StartDate: '2026-08-03', phase2EndDate: '2026-11-20',
-    roster: { FS: 6, JB: 6, DE: 4, DO: 4, QA: 4 }, graduated: true, withdrawn: 0, unassigned: 0, withHistory: false,
+    roster: { FS: 6, JB: 6, DE: 4, DO: 4, QA: 4 }, graduated: true, withdrawn: 0, withHistory: false,
   },
   {
     sequenceNumber: 3, phase1StartDate: '2026-08-03', phase1EndDate: '2026-10-23',
     phase2StartDate: '2026-11-02', phase2EndDate: '2027-02-19',
-    roster: { FS: 7, JB: 7, DE: 5, DO: 4, QA: 4, PB: 3 }, graduated: false, withdrawn: 1, unassigned: 0, withHistory: true,
+    roster: { FS: 7, JB: 7, DE: 5, DO: 4, QA: 4, PB: 3 }, graduated: false, withdrawn: 1, withHistory: true,
   },
   {
     sequenceNumber: 4, phase1StartDate: '2026-11-02', phase1EndDate: '2027-01-29',
     phase2StartDate: '2027-02-08', phase2EndDate: '2027-05-28',
-    roster: {}, graduated: false, withdrawn: 0, unassigned: 0, withHistory: true,
+    roster: {}, graduated: false, withdrawn: 0, withHistory: true,
     live: true,
   },
 ];
@@ -300,13 +304,12 @@ export function createSeedDb(now: Date): DbSchema {
       }
     }
 
-    // Coach assignment: balanced round-robin over a shuffled roster; last N stay Unassigned.
+    // Coach assignment: balanced round-robin over a shuffled roster — every apprentice has a coach.
     const order = rng.shuffle(members.map((_, i) => i));
-    const unassigned = new Set(order.slice(order.length - c.unassigned));
     const withdrawn = new Set(order.slice(0, c.withdrawn));
     let cursor = rng.int(0, coaches.length - 1);
     members.forEach((m, i) => {
-      const coachId = unassigned.has(i) ? null : coaches[cursor++ % coaches.length]!.id;
+      const coachId = coaches[cursor++ % coaches.length]!.id;
       const status: ApprenticeStatus = withdrawn.has(i) ? 'WITHDRAWN' : m.status;
       if (status === 'WITHDRAWN') withdrawnIds.add(m.id);
       apprentices.push({ ...m, coachId, status });
@@ -314,6 +317,7 @@ export function createSeedDb(now: Date): DbSchema {
   }
 
   const attendance = buildHistory(cohorts, COHORTS, apprentices, profiles, withdrawnIds, coaches, today);
+  const eodPacing = buildEodHistory(cohorts, COHORTS, apprentices, profiles, attendance);
 
   return {
     schemaVersion: DB_SCHEMA_VERSION,
@@ -323,6 +327,7 @@ export function createSeedDb(now: Date): DbSchema {
     cohorts: tableFrom(cohorts),
     apprentices: tableFrom(apprentices),
     attendance: tableFrom(attendance),
+    eodPacing: tableFrom(eodPacing),
   };
 }
 
@@ -448,3 +453,110 @@ function pickReason(rng: Prng, status: AttendanceStatus): AttendanceReason | nul
       return rng.weighted({ SICK: 4, FAMILY: 2, APPOINTMENT: 3, TRANSPORT: 1 });
   }
 }
+
+// ── EOD pacing ─────────────────────────────────────────────────────────────────
+
+const EOD_WEIGHTS: Readonly<Record<Profile, Readonly<Record<EodStatus, number>>>> = {
+  star: { ON_PACE: 88, NEEDS_SUPPORT: 9, BLOCKED: 3 },
+  steady: { ON_PACE: 74, NEEDS_SUPPORT: 18, BLOCKED: 8 },
+  'late-riser': { ON_PACE: 64, NEEDS_SUPPORT: 24, BLOCKED: 12 },
+  'at-risk': { ON_PACE: 48, NEEDS_SUPPORT: 30, BLOCKED: 22 },
+};
+
+const WINS: readonly string[] = [
+  'Merged first PR of the sprint',
+  'Paired well and unblocked a teammate',
+  'Finished the API endpoints ahead of plan',
+  'Great demo at stand-up',
+  'Wrote solid unit tests today',
+  'Picked up Docker basics quickly',
+];
+
+const BLOCKER_NOTES: Readonly<Record<Exclude<EodTag, 'GREAT_PROGRESS'>, readonly string[]>> = {
+  CONCEPTS: ['Struggling with async/await', 'Recursion still not clicking', 'Needs a walkthrough on SQL joins'],
+  GIT_PR: ['Merge conflicts on the feature branch', 'PR waiting on review for 2 days', 'Rebased onto the wrong branch'],
+  ENVIRONMENT: ['Laptop setup — Docker won’t start', 'Can’t connect to the dev database', 'Node version mismatch'],
+  TIME_MGMT: ['Spent the day on a side quest', 'Underestimated the ticket scope', 'Context-switching between tasks'],
+  OTHER: ['Waiting on requirements clarification', 'Unclear acceptance criteria'],
+};
+
+/** Behind streaks (consecutive Needs Support / Blocked days ending yesterday) planted in the live cohort. */
+const PLANTED_BEHIND_STREAKS: readonly number[] = [3, 2, 4];
+
+/**
+ * EOD history for the live cohort, only on days the apprentice was present (P/L) — absent days have no EOD.
+ * Profile-weighted statuses, positive notes on some On Pace days, blocker tags/notes otherwise,
+ * plus a few planted "behind" streaks ending yesterday.
+ */
+function buildEodHistory(
+  cohorts: readonly Cohort[],
+  seeds: readonly CohortSeed[],
+  apprentices: readonly Apprentice[],
+  profiles: ReadonlyMap<Id, Profile>,
+  attendance: readonly AttendanceRecord[],
+): EodPacingRecord[] {
+  const rng = new Prng(EOD_SEED);
+  const liveIdx = seeds.findIndex((c) => c.live);
+  const cohort = cohorts[liveIdx];
+  if (!cohort) return [];
+
+  const present = attendance.filter((r) => r.cohortId === cohort.id && (r.status === 'P' || r.status === 'L'));
+  const presentKeys = new Set(present.map((r) => r.id));
+  const coachOf = new Map(apprentices.map((a) => [a.id, a.coachId]));
+  const records = new Map<Id, EodPacingRecord>();
+
+  const make = (apprenticeId: Id, date: IsoDate, status: EodStatus, recorder: Id): EodPacingRecord => {
+    let tag: EodTag | null = null;
+    let note: string | null = null;
+    if (status === 'ON_PACE') {
+      if (rng.next() < 0.22) {
+        tag = 'GREAT_PROGRESS';
+        note = rng.pick(WINS);
+      }
+    } else {
+      const blocker = rng.weighted({ CONCEPTS: 4, GIT_PR: 3, ENVIRONMENT: 2, TIME_MGMT: 3, OTHER: 1 });
+      tag = blocker;
+      note = rng.next() < 0.7 ? rng.pick(BLOCKER_NOTES[blocker]) : null;
+    }
+    const recordedAt = at(date, 17, rng.int(10, 55));
+    return {
+      id: eodId(apprenticeId, date),
+      apprenticeId,
+      cohortId: cohort.id,
+      date,
+      status,
+      tag,
+      note,
+      recordedBy: recorder,
+      recordedAt,
+      createdAt: recordedAt,
+      updatedAt: recordedAt,
+    };
+  };
+
+  for (const r of present) {
+    const profile = profiles.get(r.apprenticeId) ?? 'steady';
+    const recorder = coachOf.get(r.apprenticeId) ?? r.recordedBy;
+    records.set(eodId(r.apprenticeId, r.date), make(r.apprenticeId, r.date, rng.weighted(EOD_WEIGHTS[profile]), recorder));
+  }
+
+  // Planted streaks: candidates present on every streak day plus the edge day before it.
+  const days = [...new Set(present.map((r) => r.date))].sort();
+  const members = apprentices.filter((a) => a.cohortId === cohort.id && a.status === 'ACTIVE');
+  const used = new Set<Id>();
+  for (const length of PLANTED_BEHIND_STREAKS) {
+    const window = days.slice(-(length + 1));
+    const candidate = members.find(
+      (a) => !used.has(a.id) && window.length === length + 1 && window.every((d) => presentKeys.has(attendanceId(a.id, d))),
+    );
+    if (!candidate) continue;
+    used.add(candidate.id);
+    const recorder = candidate.coachId ?? coachOf.get(candidate.id) ?? present[0]!.recordedBy;
+    window.forEach((d, i) => {
+      const status: EodStatus = i === 0 ? 'ON_PACE' : i % 2 === 0 ? 'BLOCKED' : 'NEEDS_SUPPORT';
+      records.set(eodId(candidate.id, d), make(candidate.id, d, status, recorder));
+    });
+  }
+  return [...records.values()];
+}
+

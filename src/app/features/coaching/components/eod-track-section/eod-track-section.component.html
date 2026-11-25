@@ -1,0 +1,66 @@
+<section class="card overflow-hidden">
+  <button
+    type="button"
+    class="flex w-full flex-col gap-3 px-4 py-4 text-left transition-colors hover:bg-surface-2/50 sm:flex-row sm:items-center sm:gap-5 sm:px-5"
+    [attr.aria-expanded]="expanded()"
+    [attr.aria-controls]="panelId()"
+    (click)="toggleExpand.emit()"
+  >
+    <span class="flex min-w-0 items-center gap-2.5 sm:w-56 sm:shrink-0">
+      @if (track().matrix.color) {
+        <span class="size-2.5 shrink-0 rounded-full" [style.background-color]="track().matrix.color" aria-hidden="true"></span>
+      }
+      <span class="truncate font-semibold">{{ track().matrix.label }}</span>
+      <span class="shrink-0 text-sm text-fg-muted">· {{ track().matrix.rows.length }}</span>
+    </span>
+
+    <span class="flex min-w-0 flex-1 items-center gap-3">
+      <span class="min-w-0 flex-1"><ap-segmented-bar [segments]="segments()" /></span>
+      <span class="w-12 shrink-0 text-right font-display text-base font-semibold tabular-nums">
+        {{ track().stats.onPace + track().stats.needsSupport + track().stats.blocked ? (track().stats.onPaceRate | percent) : '—' }}
+      </span>
+    </span>
+
+    <span class="flex shrink-0 items-center gap-1.5">
+      @if (track().stats.needsSupport) {
+        <span class="rounded-full bg-warning-soft px-2 py-0.5 text-[11px] font-semibold text-warning" [title]="track().stats.needsSupport + ' Needs Support days'">
+          {{ track().stats.needsSupport }} NS
+        </span>
+      }
+      @if (track().stats.blocked) {
+        <span class="rounded-full bg-danger-soft px-2 py-0.5 text-[11px] font-semibold text-danger" [title]="track().stats.blocked + ' Blocked days'">
+          {{ track().stats.blocked }} BL
+        </span>
+      }
+      @if (track().stats.behind) {
+        <span class="rounded-full bg-danger px-2 py-0.5 text-[11px] font-semibold text-on-status-a" title="Apprentices with a behind streak">
+          {{ track().stats.behind }} behind
+        </span>
+      }
+      <ap-icon name="chevron-down" [size]="18" class="ml-1 text-fg-subtle transition-transform duration-200" [class.rotate-180]="expanded()" />
+    </span>
+  </button>
+
+  @if (expanded()) {
+    <div [id]="panelId()" class="border-t border-line [animation:fade-up_200ms_var(--ease-out-quart)]">
+      <div class="hidden md:block [&_.card]:rounded-none [&_.card]:border-0 [&_.card]:shadow-none">
+        <ap-status-matrix
+          [label]="track().matrix.label + ' EOD matrix'"
+          [groups]="groups()"
+          [days]="days()"
+          [today]="today()"
+          [metricLabels]="['On pace', 'Behind']"
+          (cellSelect)="cellSelect.emit($event)"
+        />
+      </div>
+      <div class="p-3 md:hidden">
+        <ap-status-card-list
+          [groups]="groups()"
+          [today]="today()"
+          [metricLabels]="['On pace', 'Behind']"
+          (cellSelect)="cellSelect.emit($event)"
+        />
+      </div>
+    </div>
+  }
+</section>
