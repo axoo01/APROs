@@ -26,12 +26,13 @@ export interface SpecializationChip {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RosterFilterBarComponent {
-  readonly chips = input.required<readonly SpecializationChip[]>();
+  /** Specialization chips; omit (empty) to hide the row. */
+  readonly chips = input<readonly SpecializationChip[]>([]);
   readonly coaches = input.required<readonly CoachOption[]>();
   /** Show the "Mine" pill (the signed-in user coaches apprentices). */
   readonly showMine = input(true);
   readonly search = input('');
-  readonly spec = model.required<SpecFilter>();
+  readonly spec = model<SpecFilter>('ALL');
   readonly coach = model.required<CoachFilter>();
   readonly searchChange = output<string>();
 

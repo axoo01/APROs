@@ -1,0 +1,12 @@
+/* Auto-height note: content-sized where supported, with a sensible fallback height elsewhere. */
+.note-field {
+  field-sizing: content;
+  min-height: 2.75rem;
+  max-height: 10rem;
+}
+
+@supports not (field-sizing: content) {
+  .note-field {
+    height: 4.5rem;
+  }
+}

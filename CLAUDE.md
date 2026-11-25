@@ -73,6 +73,11 @@ styles/tokens.css  Brand ramps + semantic roles (light/dark/.theme-dark)
   Behind streak = consecutive NS/BL working days (today On Pace → 0, unrated past day breaks); pill at ≥ 2.
   EOD log "Behind": longest consecutive NS/BL run in the window ≥ 2 (`longestBehindRun`). Today's EOD defaults to Mine
   for a coach with a group. Log KPI cards toggle a filter/rank (worst first); click again to clear.
+- **EOD presets** (`EOD_PRESETS`): 3 per status; a preset selects its tag and pre-fills the note, never overwriting
+  custom text ("Reset text" restores it).
+- **Weekly behavior** (`behavior.rules`): 6 tiers `+H +M +L` (positive) · `-H -M -L` (needs attention; `-L` = urgent),
+  one per apprentice per cohort week (`id = apprenticeId:weekStart`, Monday). A rating pre-fills its standard definition
+  unless the note is custom. Closeout = remaining → `+M`. Coaching screens default to Mine for a coach with a group.
 - **Coach filter** (`shared/utils/roster-scope.util`): `ALL` · `MINE` · a coach id — every active apprentice has a coach.
 - **Non-working days:** weekends + `cohort.nonWorkingDays` block recording in production; **Demo Mode never blocks** (warns only).
 - Dates are local `YYYY-MM-DD` (`IsoDate`); timestamps ISO-8601. Inject `Clock` — never `new Date()` in domain/services.
@@ -83,6 +88,7 @@ styles/tokens.css  Brand ramps + semantic roles (light/dark/.theme-dark)
 - Modals = native `<dialog class="sheet">` (bottom sheet on phones, centered from `sm`). Status colours per P/L/A/E: `features/attendance/attendance-status.const.ts`.
 - Glass: `glass` (floating layers), `glass-strong` (hero panels, e.g. login card), `glass-tile` (translucent content inside a glass
   panel, no blur). Never nest backdrop-filters or put one on an *ancestor* of menus/sheets (breaks child blur and `position: fixed`).
+- Avatars are one monochrome frosted badge (`--ap-avatar-*` tokens) — never coloured, so they can't clash with status/rating/specialization colours.
 - `.theme-dark` forces dark tokens on a subtree (login brand scene) regardless of the user's theme.
 - Don't put display utilities on a component host that callers may need to hide — wrap instead.
 - Accessibility: WCAG 2.2 AA, ≥44px targets, full keyboard paths (listbox/menu patterns), `aria-live` for counts, reduced motion respected.

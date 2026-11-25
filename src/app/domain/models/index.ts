@@ -6,3 +6,4 @@ export * from './apprentice.model';
 export * from './attendance.model';
 export * from './coaching.model';
 export * from './eod.model';
+export * from './behavior.model';

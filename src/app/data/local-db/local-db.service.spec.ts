@@ -79,7 +79,7 @@ describe('LocalDbService', () => {
     expect(selectAll(db.snapshot().attendance).length).toBeGreaterThan(1000);
   });
 
-  it('migrates a v1 store forward, keeping data and adding the EOD table', () => {
+  it('migrates a v1 store forward, keeping data and adding newer tables', () => {
     const v1 = {
       schemaVersion: 1,
       seededAt: '2026-11-23T08:00:00.000Z',
@@ -92,6 +92,7 @@ describe('LocalDbService', () => {
     const migrated = migrate(v1);
     expect(migrated?.schemaVersion).toBe(DB_SCHEMA_VERSION);
     expect(migrated?.eodPacing).toEqual({ ids: [], entities: {} });
+    expect(migrated?.weeklyBehavior).toEqual({ ids: [], entities: {} });
     expect(migrated?.attendance.ids).toEqual(['x']);
   });
 });

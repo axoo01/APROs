@@ -217,6 +217,12 @@
   --ap-status-e: var(--color-light-blue-800);
   --ap-on-status-e: var(--color-white);
   --ap-status-e-soft: var(--color-light-blue-50);
+
+  /* Avatars — one monochrome frosted badge, so they never compete with status or specialization colours */
+  --ap-avatar-bg: rgb(8 40 59 / 0.07);
+  --ap-avatar-line: rgb(8 40 59 / 0.14);
+  --ap-avatar-fg: var(--color-primary-500);
+  --ap-avatar-highlight: rgb(255 255 255 / 0.7);
 }
 
 /* `.theme-dark` forces dark tokens on a subtree (e.g. the always-on-navy login), independent of the user theme. */
@@ -264,6 +270,11 @@
   --ap-status-a: var(--color-red-500);
   --ap-status-a-soft: rgb(240 82 82 / 0.16);
   --ap-status-e: var(--color-light-blue-600);
+
+  --ap-avatar-bg: rgb(255 255 255 / 0.07);
+  --ap-avatar-line: rgb(255 255 255 / 0.16);
+  --ap-avatar-fg: #eef2f4;
+  --ap-avatar-highlight: rgb(255 255 255 / 0.1);
   --ap-on-status-e: var(--color-primary-900);
   --ap-status-e-soft: rgb(93 175 246 / 0.16);
 }

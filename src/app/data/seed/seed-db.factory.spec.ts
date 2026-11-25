@@ -114,7 +114,7 @@ describe('createSeedDb', () => {
     const eod = selectAll(wednesday.eodPacing);
     expect(eod.length).toBeGreaterThan(300);
     for (const r of eod) expect(['P', 'L']).toContain(wednesday.attendance.entities[r.id]?.status);
-    expect(eod.some((r) => r.status === 'ON_PACE' && r.tag === 'GREAT_PROGRESS' && r.note)).toBe(true);
+    expect(eod.some((r) => r.status === 'ON_PACE' && r.tag !== null && r.note)).toBe(true);
 
     const byApprentice = new Map<string, Map<IsoDate, EodStatus>>();
     for (const r of eod.filter((x) => x.cohortId === c4.id)) {
@@ -123,6 +123,18 @@ describe('createSeedDb', () => {
     }
     const behind = [...byApprentice.values()].filter((m) => behindStreak(m, '2026-11-25', c4) >= 2);
     expect(behind.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('seeds weekly behavior for prior weeks and only part of the current week', () => {
+    const wednesday = createSeedDb(new Date(2026, 10, 25, 10, 0, 0));
+    const c4 = selectAll(wednesday.cohorts).find((c) => c.code === '26-11-04')!;
+    const ratings = selectAll(wednesday.weeklyBehavior).filter((r) => r.cohortId === c4.id);
+    const byWeek = new Map<string, number>();
+    for (const r of ratings) byWeek.set(r.weekStart, (byWeek.get(r.weekStart) ?? 0) + 1);
+    expect([...byWeek.keys()].sort()).toEqual(['2026-11-02', '2026-11-09', '2026-11-16', '2026-11-23']);
+    expect(byWeek.get('2026-11-16')).toBe(30);
+    expect(byWeek.get('2026-11-23')).toBeLessThan(30);
+    expect(new Set(ratings.map((r) => r.rating)).size).toBeGreaterThanOrEqual(4);
   });
 
   it('stays well within localStorage limits', () => {

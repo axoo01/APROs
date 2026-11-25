@@ -20,7 +20,7 @@
             [attr.aria-label]="r.name + ', ' + (rec ? statusLabels[rec.status] : 'no record') + '. Edit'"
             (click)="cellSelect.emit({ rowId: r.id, date: day() })"
           >
-            <ap-avatar [name]="r.name" [seed]="r.id" [src]="r.apprentice.avatarUrl" [size]="40" />
+            <ap-avatar [name]="r.name" [src]="r.apprentice.avatarUrl" [size]="40" />
             <span class="min-w-0 flex-1">
               <span class="block truncate font-semibold">{{ r.name }}</span>
               <span class="block truncate text-xs text-fg-muted">

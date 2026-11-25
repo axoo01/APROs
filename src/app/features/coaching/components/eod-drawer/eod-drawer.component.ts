@@ -11,15 +11,17 @@ import {
   viewChild,
 } from '@angular/core';
 import {
+  EOD_PRESETS,
+  EOD_PRESET_NOTES,
   EOD_STATUSES,
   EOD_STATUS_LABELS,
-  EOD_TAGS_FOR_STATUS,
   EOD_TAG_LABELS,
   NOTE_MAX_LENGTH,
   STATUS_LABELS,
   type Apprentice,
   type AttendanceStatus,
   type EodMark,
+  type EodPreset,
   type EodStatus,
   type EodTag,
   type Id,
@@ -45,8 +47,8 @@ export interface EodTarget {
 }
 
 /**
- * EOD editor: On Pace · Needs Support · Blocked, 1-tap tags (positive for On Pace, blockers otherwise),
- * optional note for every status. A tag tap saves instantly unless the note is open.
+ * EOD editor: On Pace · Needs Support · Blocked, three presets per status that select a tag and pre-fill
+ * an editable note (never overwriting text the coach typed — "Reset text" restores the preset), then Save.
  */
 @Component({
   selector: 'ap-eod-drawer',
@@ -89,12 +91,14 @@ export class EodDrawerComponent {
     source: this.openedKey,
     computation: () => untracked(this.target)?.mark?.note ?? '',
   });
-  protected readonly noteOpen = linkedSignal<string | null, boolean>({
-    source: this.openedKey,
-    computation: () => untracked(this.focusNote) || !!untracked(this.target)?.mark?.note,
+  protected readonly presets = computed(() => EOD_PRESETS[this.status()]);
+  /** The preset sentence for the selected tag (if any) — target of "Reset text". */
+  protected readonly presetNote = computed(() => this.presets().find((p) => p.tag === this.tag())?.note ?? null);
+  /** Coach typed something other than a preset sentence → presets won't overwrite it. */
+  protected readonly customText = computed(() => {
+    const note = this.note().trim();
+    return note.length > 0 && !EOD_PRESET_NOTES.has(note);
   });
-
-  protected readonly tags = computed(() => EOD_TAGS_FOR_STATUS[this.status()]);
   protected readonly flag = computed(() => behindFlag(this.target()?.behindStreak ?? 0));
   protected readonly awayNotice = computed(() => {
     const a = this.target()?.attendance;
@@ -117,20 +121,28 @@ export class EodDrawerComponent {
   }
 
   protected pickStatus(s: EodStatus): void {
+    if (s === this.status()) return;
     this.status.set(s);
-    // A tag from another status group doesn't carry over (e.g. "Great Progress" on Blocked).
+    // A preset from another status doesn't carry over (e.g. "Great Progress" on Blocked); its sentence goes too.
     const t = this.tag();
-    if (t && !EOD_TAGS_FOR_STATUS[s].includes(t)) this.tag.set(null);
+    if (t && !EOD_PRESETS[s].some((p) => p.tag === t)) {
+      this.tag.set(null);
+      if (!this.customText()) this.note.set('');
+    }
   }
 
-  protected pickTag(t: EodTag): void {
-    const next = this.tag() === t ? null : t;
-    this.tag.set(next);
-    if (next && !this.noteOpen()) this.submit();
+  protected pickPreset(p: EodPreset): void {
+    if (this.tag() === p.tag) {
+      this.tag.set(null);
+      if (!this.customText()) this.note.set('');
+      return;
+    }
+    this.tag.set(p.tag);
+    if (!this.customText()) this.note.set(p.note);
   }
 
-  protected openNote(): void {
-    this.noteOpen.set(true);
+  protected resetText(): void {
+    this.note.set(this.presetNote() ?? '');
     queueMicrotask(() => this.noteField()?.nativeElement.focus());
   }
 

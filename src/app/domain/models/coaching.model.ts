@@ -1,22 +1,8 @@
 /**
- * Schema reserved for later milestones (weekly behavior, Phase 2 sprints).
- * Declared now so the normalized store shape is stable; not yet persisted or seeded. EOD pacing: `eod.model.ts`.
+ * Schema reserved for later milestones (Phase 2 sprints). Not yet persisted or seeded.
+ * EOD pacing: `eod.model.ts` · weekly behavior: `behavior.model.ts`.
  */
-import type { Auditable, Id, IsoDate } from './common.model';
-
-export const BEHAVIOR_RATINGS = ['+H', '+M', '-L'] as const;
-export type BehaviorRating = (typeof BEHAVIOR_RATINGS)[number];
-
-export interface WeeklyBehavior extends Auditable {
-  readonly id: Id;
-  readonly apprenticeId: Id;
-  readonly cohortId: Id;
-  /** Monday of the rated week. */
-  readonly weekStart: IsoDate;
-  readonly rating: BehaviorRating;
-  readonly note: string | null;
-  readonly recordedBy: Id;
-}
+import type { Auditable, Id } from './common.model';
 
 export interface SprintMark extends Auditable {
   readonly id: Id;

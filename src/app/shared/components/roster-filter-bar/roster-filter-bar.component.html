@@ -86,39 +86,41 @@
     </div>
   </div>
 
-  <div
-    class="no-scrollbar -mx-4 flex snap-x gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0"
-    role="group"
-    aria-label="Filter by specialization"
-  >
-    <button
-      type="button"
-      class="chip"
-      [attr.aria-pressed]="spec() === 'ALL'"
-      (click)="spec.set('ALL')"
+  @if (chips().length) {
+    <div
+      class="no-scrollbar -mx-4 flex snap-x gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0"
+      role="group"
+      aria-label="Filter by specialization"
     >
-      All
-    </button>
-    @for (c of chips(); track c.specialization.id) {
       <button
         type="button"
         class="chip"
-        [attr.aria-pressed]="spec() === c.specialization.id"
-        [attr.aria-label]="c.specialization.name + ', ' + c.hint"
-        (click)="spec.set(spec() === c.specialization.id ? 'ALL' : c.specialization.id)"
+        [attr.aria-pressed]="spec() === 'ALL'"
+        (click)="spec.set('ALL')"
       >
-        <span
-          class="size-2.5 rounded-full"
-          [style.background-color]="tagColor(c.specialization.colorTag)"
-          aria-hidden="true"
-        ></span>
-        {{ c.specialization.name }}
-        @if (c.badge !== null) {
-          <span class="chip-count">{{ c.badge }}</span>
-        } @else if (c.done) {
-          <ap-icon name="check" [size]="14" class="text-status-p" />
-        }
+        All
       </button>
-    }
-  </div>
+      @for (c of chips(); track c.specialization.id) {
+        <button
+          type="button"
+          class="chip"
+          [attr.aria-pressed]="spec() === c.specialization.id"
+          [attr.aria-label]="c.specialization.name + ', ' + c.hint"
+          (click)="spec.set(spec() === c.specialization.id ? 'ALL' : c.specialization.id)"
+        >
+          <span
+            class="size-2.5 rounded-full"
+            [style.background-color]="tagColor(c.specialization.colorTag)"
+            aria-hidden="true"
+          ></span>
+          {{ c.specialization.name }}
+          @if (c.badge !== null) {
+            <span class="chip-count">{{ c.badge }}</span>
+          } @else if (c.done) {
+            <ap-icon name="check" [size]="14" class="text-status-p" />
+          }
+        </button>
+      }
+    </div>
+  }
 </div>

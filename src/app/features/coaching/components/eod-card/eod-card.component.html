@@ -21,7 +21,7 @@
     (keydown)="onKey($event)"
   >
     <span class="relative shrink-0">
-      <ap-avatar [name]="entry().name" [seed]="entry().id" [src]="entry().apprentice.avatarUrl" [size]="44" />
+      <ap-avatar [name]="entry().name" [src]="entry().apprentice.avatarUrl" [size]="44" />
       @if (entry().revealing && tone(); as t) {
         <span
           class="badge-pop absolute -bottom-1 -right-1 grid size-5 place-items-center rounded-full ring-2 ring-surface"

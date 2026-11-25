@@ -1,6 +1,7 @@
 import { type EnvironmentProviders, inject, makeEnvironmentProviders, provideAppInitializer } from '@angular/core';
 import { LocalApprenticeRepository } from './adapters/local/local-apprentice.repository';
 import { LocalAttendanceRepository } from './adapters/local/local-attendance.repository';
+import { LocalBehaviorRepository } from './adapters/local/local-behavior.repository';
 import { LocalCohortRepository } from './adapters/local/local-cohort.repository';
 import { LocalDemoData } from './adapters/local/local-demo-data.adapter';
 import { LocalEodRepository } from './adapters/local/local-eod.repository';
@@ -10,6 +11,7 @@ import { LocalDbService } from './local-db/local-db.service';
 import { DemoDataPort } from './ports/demo-data.port';
 import { ApprenticeRepository } from './ports/apprentice.repository';
 import { AttendanceRepository } from './ports/attendance.repository';
+import { BehaviorRepository } from './ports/behavior.repository';
 import { CohortRepository } from './ports/cohort.repository';
 import { EodRepository } from './ports/eod.repository';
 import { SpecializationRepository } from './ports/specialization.repository';
@@ -32,6 +34,7 @@ export function provideDataLayer(kind: DataLayerKind = 'local'): EnvironmentProv
         { provide: ApprenticeRepository, useClass: LocalApprenticeRepository },
         { provide: AttendanceRepository, useClass: LocalAttendanceRepository },
         { provide: EodRepository, useClass: LocalEodRepository },
+        { provide: BehaviorRepository, useClass: LocalBehaviorRepository },
         { provide: DemoDataPort, useClass: LocalDemoData },
         provideAppInitializer(() => inject(LocalDbService).init()),
       ]);

@@ -1,7 +1,14 @@
 import {
   addDays,
+  BEHAVIOR_DEFINITIONS,
+  EOD_PRESETS,
   attendanceId,
+  behaviorId,
+  cohortWeeks,
   eodId,
+  onPaceRate,
+  summarizeAttendance,
+  tallyEod,
   defaultCohortDisplayName,
   buildCohortCode,
   isWithin,
@@ -20,6 +27,8 @@ import {
   type EodPacingRecord,
   type EodStatus,
   type EodTag,
+  type BehaviorRating,
+  type WeeklyBehaviorRecord,
   type Id,
   type IsoDate,
   type Role,
@@ -34,6 +43,7 @@ const STRUCTURE_SEED = 0xa9_2026;
 const HISTORY_SEED = 0x11_0426;
 const PATTERN_SEED = 0x57_4eaf;
 const EOD_SEED = 0xe0_d2026;
+const BEHAVIOR_SEED = 0xbe_4a71;
 
 /** The live demo cohort's history covers (at most) the last 4 weeks of working days before today. */
 export const LIVE_HISTORY_WORKING_DAYS = 20;
@@ -318,6 +328,7 @@ export function createSeedDb(now: Date): DbSchema {
 
   const attendance = buildHistory(cohorts, COHORTS, apprentices, profiles, withdrawnIds, coaches, today);
   const eodPacing = buildEodHistory(cohorts, COHORTS, apprentices, profiles, attendance);
+  const weeklyBehavior = buildBehaviorHistory(cohorts, COHORTS, apprentices, attendance, eodPacing, today);
 
   return {
     schemaVersion: DB_SCHEMA_VERSION,
@@ -328,6 +339,7 @@ export function createSeedDb(now: Date): DbSchema {
     apprentices: tableFrom(apprentices),
     attendance: tableFrom(attendance),
     eodPacing: tableFrom(eodPacing),
+    weeklyBehavior: tableFrom(weeklyBehavior),
   };
 }
 
@@ -463,21 +475,15 @@ const EOD_WEIGHTS: Readonly<Record<Profile, Readonly<Record<EodStatus, number>>>
   'at-risk': { ON_PACE: 48, NEEDS_SUPPORT: 30, BLOCKED: 22 },
 };
 
-const WINS: readonly string[] = [
-  'Merged first PR of the sprint',
-  'Paired well and unblocked a teammate',
-  'Finished the API endpoints ahead of plan',
-  'Great demo at stand-up',
-  'Wrote solid unit tests today',
-  'Picked up Docker basics quickly',
-];
-
-const BLOCKER_NOTES: Readonly<Record<Exclude<EodTag, 'GREAT_PROGRESS'>, readonly string[]>> = {
-  CONCEPTS: ['Struggling with async/await', 'Recursion still not clicking', 'Needs a walkthrough on SQL joins'],
-  GIT_PR: ['Merge conflicts on the feature branch', 'PR waiting on review for 2 days', 'Rebased onto the wrong branch'],
-  ENVIRONMENT: ['Laptop setup — Docker won’t start', 'Can’t connect to the dev database', 'Node version mismatch'],
-  TIME_MGMT: ['Spent the day on a side quest', 'Underestimated the ticket scope', 'Context-switching between tasks'],
-  OTHER: ['Waiting on requirements clarification', 'Unclear acceptance criteria'],
+/** Extra hand-written specifics, used instead of the preset sentence on some days. */
+const EOD_CUSTOM_NOTES: Readonly<Partial<Record<EodTag, readonly string[]>>> = {
+  GREAT_PROGRESS: ['Merged first PR of the sprint', 'Great demo at stand-up'],
+  AHEAD_OF_TIME: ['Finished the API endpoints a day early'],
+  CONCEPTS: ['Struggling with async/await', 'Needs a walkthrough on SQL joins'],
+  MISSED_TARGET: ['Auth flow slipped to tomorrow'],
+  ENVIRONMENT: ['Power outage and no internet for half the day', 'Still waiting on cloud console access'],
+  TECHNICAL: ['CORS errors on the auth integration', 'Flaky test blocking the pipeline'],
+  TIME_MGMT: ['Underestimated the ticket scope'],
 };
 
 /** Behind streaks (consecutive Needs Support / Blocked days ending yesterday) planted in the live cohort. */
@@ -508,15 +514,12 @@ function buildEodHistory(
   const make = (apprenticeId: Id, date: IsoDate, status: EodStatus, recorder: Id): EodPacingRecord => {
     let tag: EodTag | null = null;
     let note: string | null = null;
-    if (status === 'ON_PACE') {
-      if (rng.next() < 0.22) {
-        tag = 'GREAT_PROGRESS';
-        note = rng.pick(WINS);
-      }
-    } else {
-      const blocker = rng.weighted({ CONCEPTS: 4, GIT_PR: 3, ENVIRONMENT: 2, TIME_MGMT: 3, OTHER: 1 });
-      tag = blocker;
-      note = rng.next() < 0.7 ? rng.pick(BLOCKER_NOTES[blocker]) : null;
+    // On Pace days get a highlight ~30% of the time; behind days almost always carry a blocker.
+    if (status !== 'ON_PACE' || rng.next() < 0.3) {
+      const preset = rng.pick(EOD_PRESETS[status]);
+      tag = preset.tag;
+      const custom = EOD_CUSTOM_NOTES[preset.tag];
+      note = custom?.length && rng.next() < 0.35 ? rng.pick(custom) : rng.next() < 0.85 ? preset.note : null;
     }
     const recordedAt = at(date, 17, rng.int(10, 55));
     return {
@@ -558,5 +561,81 @@ function buildEodHistory(
     });
   }
   return [...records.values()];
+}
+
+// ── Weekly behavior ───────────────────────────────────────────────────────────
+
+/** Weeks rated in the demo: the last few completed cohort weeks; the current week is only partly rated. */
+const BEHAVIOR_HISTORY_WEEKS = 3;
+const CURRENT_WEEK_RATED_SHARE = 0.4;
+
+const BEHAVIOR_CUSTOM_NOTES: Readonly<Record<BehaviorRating, readonly string[]>> = {
+  '+H': ['Led the sprint demo and mentored two peers.', 'Owned the release checklist end to end.'],
+  '+M': ['Reliable all week; good stand-up updates.'],
+  '+L': ['On track; encourage more questions in reviews.'],
+  '-H': ['Two late mornings — quick check-in booked.'],
+  '-M': ['Skipped two EOD updates; agreed a daily reminder.'],
+  '-L': ['Unreachable for most of the week — escalated to the cohort lead.'],
+};
+
+/** Maps a week's attendance + EOD signal (0–1) to the 6-tier scale. */
+function ratingFor(score: number): BehaviorRating {
+  if (score >= 0.95) return '+H';
+  if (score >= 0.87) return '+M';
+  if (score >= 0.78) return '+L';
+  if (score >= 0.68) return '-H';
+  if (score >= 0.52) return '-M';
+  return '-L';
+}
+
+/**
+ * Weekly ratings for the live cohort, derived from that week's attendance and EOD (with a little noise):
+ * the last {@link BEHAVIOR_HISTORY_WEEKS} completed weeks fully rated, the current week partly rated.
+ */
+function buildBehaviorHistory(
+  cohorts: readonly Cohort[],
+  seeds: readonly CohortSeed[],
+  apprentices: readonly Apprentice[],
+  attendance: readonly AttendanceRecord[],
+  eod: readonly EodPacingRecord[],
+  today: IsoDate,
+): WeeklyBehaviorRecord[] {
+  const rng = new Prng(BEHAVIOR_SEED);
+  const cohort = cohorts[seeds.findIndex((c) => c.live)];
+  if (!cohort) return [];
+  const weeks = cohortWeeks(cohort, today);
+  const current = weeks.at(-1);
+  const rated = [...weeks.slice(0, -1).slice(-BEHAVIOR_HISTORY_WEEKS), ...(current ? [current] : [])];
+  const members = apprentices.filter((a) => a.cohortId === cohort.id && a.status === 'ACTIVE');
+  const out: WeeklyBehaviorRecord[] = [];
+
+  for (const week of rated) {
+    const isCurrent = week === current;
+    const inWeek = (date: IsoDate) => date >= week.start && date <= week.end;
+    for (const a of members) {
+      if (isCurrent && rng.next() > CURRENT_WEEK_RATED_SHARE) continue;
+      const att = summarizeAttendance(attendance.filter((r) => r.apprenticeId === a.id && inWeek(r.date)));
+      const pacing = tallyEod(eod.filter((r) => r.apprenticeId === a.id && inWeek(r.date)));
+      if (att.total === 0) continue;
+      const score = 0.55 * att.attendanceRate + 0.25 * att.punctualityRate + 0.2 * onPaceRate(pacing) + (rng.next() - 0.5) * 0.08;
+      const rating = ratingFor(score);
+      const note = rng.next() < 0.3 ? rng.pick(BEHAVIOR_CUSTOM_NOTES[rating]) : BEHAVIOR_DEFINITIONS[rating];
+      const day = week.end < today ? week.end : addDays(today, -1);
+      const recordedAt = at(day, 16, rng.int(0, 55));
+      out.push({
+        id: behaviorId(a.id, week.start),
+        apprenticeId: a.id,
+        cohortId: cohort.id,
+        weekStart: week.start,
+        rating,
+        note,
+        recordedBy: a.coachId ?? members[0]!.coachId ?? a.id,
+        recordedAt,
+        createdAt: recordedAt,
+        updatedAt: recordedAt,
+      });
+    }
+  }
+  return out;
 }
 

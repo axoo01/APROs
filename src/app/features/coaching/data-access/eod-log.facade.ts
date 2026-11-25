@@ -30,7 +30,6 @@ import { ReferenceDataStore } from '../../../core/state/reference-data.store';
 import { ApprenticeRepository } from '../../../data/ports/apprentice.repository';
 import { AttendanceRepository } from '../../../data/ports/attendance.repository';
 import { EodRepository } from '../../../data/ports/eod.repository';
-import type { SpecializationChip } from '../../../shared/components/roster-filter-bar/roster-filter-bar.component';
 import type { MatrixGroup } from '../../../shared/components/status-matrix/status-matrix.component';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { colorTagVar } from '../../../shared/utils/color-tag.util';
@@ -41,7 +40,6 @@ import {
   inRosterScope,
   matchesSearch,
   type CoachFilter,
-  type SpecFilter,
 } from '../../../shared/utils/roster-scope.util';
 import { streamFor } from '../../../shared/utils/stream-for.util';
 import type { EodTarget } from '../components/eod-drawer/eod-drawer.component';
@@ -107,7 +105,6 @@ export class EodLogFacade {
   readonly showMine = this.refs.currentUserIsCoach;
 
   readonly preset = signal<LogPreset>('THIS_WEEK');
-  readonly specFilter = signal<SpecFilter>('ALL');
   readonly coachFilter = signal<CoachFilter>('ALL');
   readonly kpiFocus = signal<EodKpi | null>(null);
   readonly searchText = signal('');
@@ -176,10 +173,8 @@ export class EodLogFacade {
       .sort((x, y) => x.name.localeCompare(y.name));
   });
 
-  private readonly scopeRows = computed(() => {
-    const spec = this.specFilter();
-    return spec === 'ALL' ? this.coachScopeRows() : this.coachScopeRows().filter((r) => r.apprentice.specializationId === spec);
-  });
+  /** Coach scope only — specializations are the collapsible tracks below, not a filter. */
+  private readonly scopeRows = this.coachScopeRows;
 
   /** Search + KPI focus: filters (support / blocked / behind) and ranks worst-first. */
   readonly visibleRows = computed(() => {
@@ -283,27 +278,8 @@ export class EodLogFacade {
     return new Set(this.tracks().filter((t) => (auto ? !closed.has(t.key) : opened.has(t.key))).map((t) => t.key));
   });
 
-  readonly chips = computed<readonly SpecializationChip[]>(() => {
-    const groups = new Map<Id, { specialization: Specialization; behind: number }>();
-    for (const r of this.coachScopeRows()) {
-      if (!r.specialization) continue;
-      const g = groups.get(r.specialization.id) ?? { specialization: r.specialization, behind: 0 };
-      groups.set(r.specialization.id, { ...g, behind: g.behind + (r.followUp ? 1 : 0) });
-    }
-    return [...groups.values()]
-      .sort((a, b) => a.specialization.name.localeCompare(b.specialization.name))
-      .map((g) => ({
-        specialization: g.specialization,
-        badge: g.behind > 0 ? g.behind : null,
-        done: false,
-        hint: `${g.behind} behind`,
-      }));
-  });
-
   readonly scopeLabel = computed(() => {
-    const spec = this.specFilter();
-    const specName = spec === 'ALL' ? null : (this.refs.specializationById().get(spec)?.name ?? null);
-    return describeScope(specName, coachFilterLabel(this.coachFilter(), this.coaches()));
+    return describeScope(null, coachFilterLabel(this.coachFilter(), this.coaches()));
   });
 
   toggleTrack(key: string): void {

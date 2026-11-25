@@ -9,7 +9,7 @@
       <span class="mx-auto -mt-2 h-1 w-10 rounded-full bg-line-strong/50 sm:hidden" aria-hidden="true"></span>
 
       <header class="flex items-center gap-3">
-        <ap-avatar [name]="t.name" [seed]="t.id" [src]="t.apprentice.avatarUrl" [size]="44" />
+        <ap-avatar [name]="t.name" [src]="t.apprentice.avatarUrl" [size]="44" />
         <div class="min-w-0 flex-1">
           <h2 id="eod-drawer-title" class="truncate text-base font-semibold">{{ t.name }}</h2>
           <p class="truncate text-xs text-fg-muted">
@@ -60,49 +60,46 @@
       <fieldset>
         <legend class="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-fg-subtle">
           {{ status() === 'ON_PACE' ? 'Highlight' : 'Blocker' }}
-          <span class="font-normal normal-case tracking-normal">· optional, 1 tap saves</span>
+          <span class="font-normal normal-case tracking-normal">· tap to fill the note</span>
         </legend>
         <div class="flex flex-wrap gap-2">
-          @for (tg of tags(); track tg) {
+          @for (p of presets(); track p.tag) {
             <button
               type="button"
               class="min-h-11 rounded-full border px-4 text-sm font-medium transition-colors"
-              [class]="tag() === tg ? 'border-transparent bg-action text-on-action' : 'border-line bg-surface text-fg-muted hover:text-fg'"
-              [attr.aria-pressed]="tag() === tg"
-              (click)="pickTag(tg)"
+              [class]="tag() === p.tag ? 'border-transparent bg-action text-on-action' : 'border-line bg-surface text-fg-muted hover:text-fg'"
+              [attr.aria-pressed]="tag() === p.tag"
+              [title]="p.note"
+              (click)="pickPreset(p)"
             >
-              @if (tg === 'GREAT_PROGRESS') {
-                <span aria-hidden="true">★ </span>
-              }
-              {{ tagLabels[tg] }}
+              {{ tagLabels[p.tag] }}
             </button>
           }
         </div>
       </fieldset>
 
-      @if (noteOpen()) {
-        <label class="block [animation:fade-up_180ms_var(--ease-out-quart)]">
-          <span class="mb-2 flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-fg-subtle">
-            Note
-            <span class="font-normal tabular-nums tracking-normal" [class.text-danger]="note().length > noteMax">
-              {{ note().length }}/{{ noteMax }}
-            </span>
+      <label class="block">
+        <span class="mb-2 flex items-center justify-between gap-3 text-xs font-semibold uppercase tracking-wider text-fg-subtle">
+          <span>Note <span class="font-normal normal-case tracking-normal">· optional</span></span>
+          <span class="flex items-center gap-3 font-normal normal-case tracking-normal">
+            @if (customText() && presetNote()) {
+              <button type="button" class="font-semibold text-accent underline-offset-2 hover:underline" (click)="resetText()">
+                Reset text
+              </button>
+            }
+            <span class="tabular-nums" [class.text-danger]="note().length > noteMax">{{ note().length }}/{{ noteMax }}</span>
           </span>
-          <textarea
-            #noteField
-            class="field min-h-20 resize-none py-2.5"
-            rows="2"
-            [placeholder]="status() === 'ON_PACE' ? 'A win worth remembering…' : 'What is blocking them? What help is needed?'"
-            [value]="note()"
-            [attr.aria-invalid]="note().length > noteMax"
-            (input)="onNote($event)"
-          ></textarea>
-        </label>
-      } @else {
-        <button type="button" class="btn btn-ghost -ml-2 self-start" (click)="openNote()">
-          <ap-icon name="note" [size]="16" /> Add note
-        </button>
-      }
+        </span>
+        <textarea
+          #noteField
+          class="field min-h-20 resize-none py-2.5"
+          rows="2"
+          [placeholder]="status() === 'ON_PACE' ? 'A win worth remembering…' : 'What is blocking them? What help is needed?'"
+          [value]="note()"
+          [attr.aria-invalid]="note().length > noteMax"
+          (input)="onNote($event)"
+        ></textarea>
+      </label>
 
       <footer class="flex flex-col-reverse gap-2 border-t border-line pt-4 sm:flex-row sm:items-center">
         @if (t.mark) {

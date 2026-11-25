@@ -8,9 +8,10 @@ import {
   type IsoDateTime,
   type Specialization,
   type User,
+  type WeeklyBehaviorRecord,
 } from '../../domain';
 
-export const DB_SCHEMA_VERSION = 2;
+export const DB_SCHEMA_VERSION = 3;
 export const DB_STORAGE_KEY = 'apros.db';
 
 export interface DbSchema {
@@ -23,6 +24,8 @@ export interface DbSchema {
   readonly attendance: EntityTable<AttendanceRecord>;
   /** Since v2. */
   readonly eodPacing: EntityTable<EodPacingRecord>;
+  /** Since v3. */
+  readonly weeklyBehavior: EntityTable<WeeklyBehaviorRecord>;
 }
 
 export type DbTableKey = Exclude<keyof DbSchema, 'schemaVersion' | 'seededAt'>;
@@ -47,6 +50,8 @@ export function isDbSchema(value: unknown): value is DbSchema {
 export const MIGRATIONS: Readonly<Record<number, (db: DbSchema) => DbSchema>> = {
   // v2: EOD pacing table (existing data is kept; history starts empty until "Reset Demo Data").
   1: (db) => ({ ...db, schemaVersion: 2, eodPacing: emptyTable<EodPacingRecord>() }),
+  // v3: weekly behavior table.
+  2: (db) => ({ ...db, schemaVersion: 3, weeklyBehavior: emptyTable<WeeklyBehaviorRecord>() }),
 };
 
 export function migrate(db: DbSchema): DbSchema | null {

@@ -68,7 +68,7 @@
                   [attr.aria-busy]="pending() === p.role"
                   (click)="signInAs(p)"
                 >
-                  <ap-avatar [name]="p.user?.fullName ?? p.label" [seed]="p.user?.id ?? p.email" [size]="46" />
+                  <ap-avatar [name]="p.user?.fullName ?? p.label" [size]="46" />
                   <span class="min-w-0 flex-1">
                     <span class="flex items-center gap-2">
                       <span class="font-display text-base font-semibold text-white">{{ p.label }}</span>

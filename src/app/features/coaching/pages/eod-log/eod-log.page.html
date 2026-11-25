@@ -33,11 +33,9 @@
 
 <ap-roster-filter-bar
   class="mt-5 block"
-  [chips]="f.chips()"
   [coaches]="f.coaches()"
   [showMine]="f.showMine()"
   [search]="f.searchText()"
-  [(spec)]="f.specFilter"
   [(coach)]="f.coachFilter"
   (searchChange)="f.setSearch($event)"
 />

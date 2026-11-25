@@ -1,0 +1,238 @@
+@if (!expanded()) {
+  <!-- Rated: compact one-line summary; the whole row opens the editor. -->
+  <button
+    type="button"
+    class="card flex min-h-14 w-full items-center gap-3 px-3.5 py-2 text-left transition-colors hover:bg-surface-2/50 [animation:fade-up_160ms_var(--ease-out-quart)]"
+    [attr.aria-label]="
+      'Edit rating for ' +
+      entry().name +
+      ', rated ' +
+      entry().rating +
+      (entry().note ? '. ' + entry().note : '')
+    "
+    (click)="editing.set(true)"
+  >
+    <ap-avatar [name]="entry().name" [src]="entry().apprentice.avatarUrl" [size]="32" />
+    <span class="flex min-w-0 max-w-[40%] shrink items-center gap-1.5">
+      <span class="truncate text-sm font-semibold">{{ entry().name }}</span>
+      <span
+        class="size-2 shrink-0 rounded-full"
+        [style.background-color]="specColor()"
+        [title]="entry().specialization?.name ?? 'No specialization'"
+        aria-hidden="true"
+      ></span>
+    </span>
+    @if (entry().rating; as r) {
+      <span
+        class="shrink-0 rounded-lg px-2 py-1 font-display text-xs font-semibold"
+        [class]="tones[r].solid"
+        >{{ r }}</span
+      >
+    }
+    <span class="min-w-0 flex-1 truncate text-xs text-fg-muted">{{
+      entry().note ?? 'No note'
+    }}</span>
+    <span
+      class="shrink-0 rounded-lg border border-line px-2.5 py-1 text-xs font-semibold text-fg-muted"
+      >Edit</span
+    >
+  </button>
+} @else {
+  <article
+    class="card flex flex-col gap-3.5 p-4"
+    [attr.aria-label]="entry().name + (entry().rating ? ', rated ' + entry().rating : ', unrated')"
+  >
+    <header class="flex items-center gap-3">
+      <ap-avatar [name]="entry().name" [src]="entry().apprentice.avatarUrl" [size]="40" />
+      <div class="min-w-0 flex-1">
+        <h3 class="truncate text-[0.9375rem] font-semibold">{{ entry().name }}</h3>
+        <p class="truncate text-xs text-fg-muted">{{ entry().coachName ?? 'Unassigned' }}</p>
+      </div>
+      <span
+        class="inline-flex max-w-[45%] shrink-0 items-center gap-1.5 truncate rounded-full border border-line px-2.5 py-1 text-[11px] font-semibold text-fg-muted"
+      >
+        <span
+          class="size-2 shrink-0 rounded-full"
+          [style.background-color]="specColor()"
+          aria-hidden="true"
+        ></span>
+        <span class="truncate">{{ entry().specialization?.name ?? 'No specialization' }}</span>
+      </span>
+      @if (entry().rating) {
+        <button
+          type="button"
+          class="btn btn-ghost min-h-9 shrink-0 px-2.5 text-xs"
+          (click)="done()"
+        >
+          <ap-icon name="check" [size]="14" /> Done
+        </button>
+      }
+    </header>
+
+    <!-- Weekly context digest -->
+    <div class="flex flex-wrap items-center gap-1.5 text-[11px]">
+      <span
+        class="inline-flex items-center gap-1 rounded-lg bg-surface-2 px-2 py-1 font-medium"
+        title="Attendance this week"
+      >
+        <ap-icon name="calendar-check" [size]="12" class="text-fg-subtle" />
+        @if (entry().attendance.total) {
+          <span
+            class="font-semibold tabular-nums"
+            [class.text-danger]="entry().attendance.attendanceRate < 0.85"
+          >
+            {{ entry().attendance.attendanceRate | percent }}
+          </span>
+          <span class="text-fg-muted tabular-nums">
+            P{{ entry().attendance.P }} L{{ entry().attendance.L }} A{{ entry().attendance.A }} E{{
+              entry().attendance.E
+            }}
+          </span>
+        } @else {
+          <span class="text-fg-muted">No attendance</span>
+        }
+      </span>
+      <span
+        class="inline-flex items-center gap-1 rounded-lg bg-surface-2 px-2 py-1 font-medium"
+        title="EOD pacing this week"
+      >
+        <ap-icon name="gauge" [size]="12" class="text-fg-subtle" />
+        @if (entry().eod.total) {
+          <span class="text-success tabular-nums">{{ entry().eod.ON_PACE }} OP</span>
+          <span class="tabular-nums" [class.text-warning]="entry().eod.NEEDS_SUPPORT"
+            >{{ entry().eod.NEEDS_SUPPORT }} NS</span
+          >
+          <span class="tabular-nums" [class.text-danger]="entry().eod.BLOCKED"
+            >{{ entry().eod.BLOCKED }} BL</span
+          >
+        } @else {
+          <span class="text-fg-muted">No EOD</span>
+        }
+      </span>
+      <span class="inline-flex items-center gap-1" aria-label="Rating trajectory">
+        @for (t of entry().trajectory; track t.week) {
+          <span
+            class="rounded-md px-1.5 py-0.5 font-semibold tabular-nums"
+            [class]="
+              t.rating ? tones[t.rating].soft : 'border border-dashed border-line text-fg-subtle'
+            "
+            [title]="'Week ' + t.week + ': ' + (t.rating ? labels[t.rating] : 'unrated')"
+          >
+            <span class="font-normal opacity-70">W{{ t.week }}</span> {{ t.rating ?? '·' }}
+          </span>
+        }
+      </span>
+      @if (entry().notes.length) {
+        <button
+          type="button"
+          class="ml-auto inline-flex min-h-8 items-center gap-1 rounded-lg px-2 font-semibold text-accent hover:bg-accent-soft"
+          [attr.aria-expanded]="notesOpen()"
+          (click)="notesOpen.set(!notesOpen())"
+        >
+          <ap-icon name="note" [size]="12" /> Notes ({{ entry().notes.length }})
+          <ap-icon
+            name="chevron-down"
+            [size]="12"
+            class="transition-transform"
+            [class.rotate-180]="notesOpen()"
+          />
+        </button>
+      }
+    </div>
+
+    @if (notesOpen()) {
+      <ul
+        class="-mt-1 flex flex-col gap-1.5 rounded-xl bg-surface-2/60 p-3 text-xs [animation:fade-up_160ms_var(--ease-out-quart)]"
+      >
+        @for (n of entry().notes; track $index) {
+          <li class="flex gap-2">
+            <span class="w-14 shrink-0 font-medium text-fg-subtle">{{
+              n.date | date: 'EEE d'
+            }}</span>
+            <span
+              class="shrink-0 rounded px-1.5 text-[10px] font-semibold"
+              [class]="
+                n.source === 'EOD' ? 'bg-info-soft text-info' : 'bg-warning-soft text-warning'
+              "
+              >{{ n.source }}</span
+            >
+            <span class="min-w-0 text-fg-muted">{{ n.text }}</span>
+          </li>
+        }
+      </ul>
+    }
+
+    <!-- 6-tier rating -->
+    <div
+      role="radiogroup"
+      [attr.aria-label]="'Weekly rating for ' + entry().name"
+      class="grid grid-cols-6 gap-1.5"
+    >
+      @for (r of ratings; track r; let i = $index) {
+        <button
+          type="button"
+          role="radio"
+          class="h-11 rounded-xl border font-display text-sm font-semibold transition-[background-color,border-color,transform] active:scale-[0.96] disabled:cursor-not-allowed"
+          [class]="
+            entry().rating === r
+              ? tones[r].solid + ' border-transparent shadow-sm'
+              : i < 3
+                ? 'border-line bg-surface hover:border-teal-400'
+                : 'border-line bg-surface hover:border-orange-400'
+          "
+          [class.ml-1.5]="i === 3"
+          [attr.aria-checked]="entry().rating === r"
+          [disabled]="disabled()"
+          [title]="labels[r]"
+          (click)="pick(r)"
+        >
+          {{ r }}
+        </button>
+      }
+    </div>
+
+    <!-- Inline note bar -->
+    <div class="flex items-start gap-2">
+      <label class="relative min-w-0 flex-1">
+        <span class="sr-only">Note for {{ entry().name }}</span>
+        <!-- Grows with its content so the full note is always readable. Enter saves, Shift+Enter adds a line. -->
+        <textarea
+          rows="1"
+          class="note-field field resize-none py-2.5 text-sm leading-snug"
+          [placeholder]="
+            entry().rating
+              ? 'Add context for this week…'
+              : 'Pick a rating — its standard note fills in here'
+          "
+          [attr.maxlength]="noteMax"
+          [value]="draft()"
+          [disabled]="disabled() || !entry().rating"
+          (input)="onDraft($event)"
+          (keydown.enter)="onEnter($event)"
+          (keydown.escape)="revert()"
+        ></textarea>
+      </label>
+      @if (dirty() && entry().rating) {
+        <button type="button" class="btn btn-primary h-11 shrink-0" (click)="commit()">Save</button>
+      } @else if (canReset()) {
+        <button
+          type="button"
+          class="btn btn-ghost h-11 shrink-0 px-3 text-xs"
+          title="Restore the standard note"
+          (click)="resetText()"
+        >
+          Reset text
+        </button>
+      } @else if (entry().rating) {
+        <button
+          type="button"
+          class="btn btn-ghost h-11 shrink-0 px-3 text-xs"
+          [disabled]="disabled()"
+          (click)="clear.emit()"
+        >
+          Clear
+        </button>
+      }
+    </div>
+  </article>
+}

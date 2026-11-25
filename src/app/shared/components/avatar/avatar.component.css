@@ -1,0 +1,6 @@
+:host(.avatar) {
+  background-color: var(--ap-avatar-bg);
+  border: 1px solid var(--ap-avatar-line);
+  box-shadow: inset 0 1px 0 0 var(--ap-avatar-highlight);
+  color: var(--ap-avatar-fg);
+}
