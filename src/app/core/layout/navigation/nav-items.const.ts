@@ -14,7 +14,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   // `/coaching` redirects to Today's EOD; the item stays active across EOD, EOD log and Weekly Behavior.
   { label: 'Coaching', path: '/coaching', icon: 'gauge', permission: 'eod.record' },
   { label: 'Dashboard', path: '/dashboard', icon: 'dashboard', permission: 'dashboard.view' },
-  { label: 'Roster', path: '/roster', icon: 'users' },
+  { label: 'Apprentices', path: '/roster', icon: 'users' },
   { label: 'Cohorts', path: '/cohorts', icon: 'layers', permission: 'cohort.create' },
   { label: 'Settings', path: '/settings', icon: 'settings' },
 ];

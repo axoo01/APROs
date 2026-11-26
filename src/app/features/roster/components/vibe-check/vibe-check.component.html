@@ -1,0 +1,21 @@
+<span class="inline-flex items-center gap-1.5 text-[11px] font-semibold tabular-nums">
+  @if (entry(); as h) {
+    <span class="inline-flex w-[4.75rem] justify-center rounded-full py-0.5" [class]="rateTone(h.attendance.attendanceRate)" title="Attendance">
+      {{ h.attendance.attendanceRate | percent: '1.0-0' }} Att
+    </span>
+    @if (h.eod.total) {
+      <span class="inline-flex w-[4.75rem] justify-center rounded-full py-0.5" [class]="rateTone(onPace(h.eod))" title="EOD on pace">
+        {{ onPace(h.eod) | percent: '1.0-0' }} OP
+      </span>
+    } @else {
+      <span class="inline-flex w-[4.75rem] justify-center rounded-full border border-dashed border-line py-0.5 text-fg-subtle" title="No EOD logged">— OP</span>
+    }
+    @if (h.health.latestRating; as rating) {
+      <span class="inline-flex w-10 justify-center rounded-full py-0.5" [class]="ratingTone[rating].soft" title="Latest behavior">{{ rating }}</span>
+    } @else {
+      <span class="inline-flex w-10 justify-center rounded-full border border-dashed border-line py-0.5 text-fg-subtle" title="Not rated yet">—</span>
+    }
+  } @else {
+    <span class="text-xs font-normal text-fg-subtle">No live data</span>
+  }
+</span>

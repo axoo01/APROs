@@ -1,0 +1,177 @@
+<!-- Backdrop click closes (pointer convenience); Esc is the native keyboard path. -->
+<!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+<dialog #dialog class="slide-over" aria-labelledby="passport-title" (close)="closed.emit()" (click)="onBackdrop($event)">
+  @if (passport(); as p) {
+    @let e = p.entry;
+    @let h = e.health;
+    @let tone = tierTone[h.tier];
+    <div class="flex h-full flex-col">
+      <!-- Header -->
+      <header class="border-b border-line p-5 pt-[calc(1.25rem+env(safe-area-inset-top))]">
+        <div class="flex items-start gap-3">
+          <ap-avatar [name]="e.name" [src]="e.apprentice.avatarUrl" [size]="52" />
+          <div class="min-w-0 flex-1">
+            <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-accent">360° Apprentice Passport</p>
+            <h2 id="passport-title" class="truncate text-lg font-semibold">{{ e.name }}</h2>
+            <p class="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-fg-muted">
+              @if (e.specialization; as s) {
+                <span class="inline-flex items-center gap-1 rounded-full bg-surface-2 px-2 py-0.5 font-semibold">
+                  <span class="size-1.5 rounded-full" [style.background-color]="tag(s.colorTag)"></span>{{ s.name }}
+                </span>
+              }
+              <span>Coach: {{ e.coachName ?? 'Unassigned' }}</span>
+            </p>
+          </div>
+          <button type="button" class="btn btn-ghost size-11 shrink-0 px-0" aria-label="Close passport" (click)="close()">
+            <ap-icon name="x" [size]="18" />
+          </button>
+        </div>
+        <div class="mt-4 flex items-center gap-3">
+          <span class="rounded-full px-2.5 py-1 text-xs font-semibold" [class]="tone.soft">
+            {{ tierLabels[h.tier] }}{{ h.silentDrift ? ' · Silent Drift' : '' }}
+          </span>
+          <span class="text-xs text-fg-muted">
+            Composite <span class="font-display text-base font-semibold tabular-nums text-fg">{{ h.score }}</span>/100
+          </span>
+        </div>
+        @if (h.reasons.length) {
+          <ul class="mt-3 flex flex-wrap gap-1.5" aria-label="Why">
+            @for (r of h.reasons; track r) {
+              <li class="rounded-lg bg-surface-2 px-2 py-1 text-xs font-medium" [class]="tone.text">{{ r }}</li>
+            }
+          </ul>
+        }
+      </header>
+
+      <div class="flex-1 overflow-y-auto p-5">
+        <!-- 4-pillar scorecard -->
+        <section aria-label="Scorecard" class="grid grid-cols-2 gap-2.5">
+          <div class="rounded-xl border border-line p-3">
+            <p class="text-[11px] font-semibold text-fg-muted">Attendance</p>
+            <p class="mt-1 font-display text-xl font-semibold tabular-nums">{{ e.attendance.attendanceRate | percent: '1.0-0' }}</p>
+            <p class="text-[11px] tabular-nums text-fg-subtle">P {{ e.attendance.P }} · L {{ e.attendance.L }} · A {{ e.attendance.A }} · E {{ e.attendance.E }}</p>
+          </div>
+          <div class="rounded-xl border border-line p-3">
+            <p class="text-[11px] font-semibold text-fg-muted">Punctuality</p>
+            <p class="mt-1 font-display text-xl font-semibold tabular-nums">{{ e.attendance.punctualityRate | percent: '1.0-0' }}</p>
+            <p class="text-[11px] text-fg-subtle">P ÷ (P + L)</p>
+          </div>
+          <div class="rounded-xl border border-line p-3">
+            <p class="text-[11px] font-semibold text-fg-muted">EOD On-Pace</p>
+            <p class="mt-1 font-display text-xl font-semibold tabular-nums">
+              @if (e.eod.total) {
+                {{ onPace(e.eod) | percent: '1.0-0' }}
+              } @else {
+                —
+              }
+            </p>
+            <p class="text-[11px] tabular-nums text-fg-subtle">{{ e.eod.ON_PACE }} OP · {{ e.eod.NEEDS_SUPPORT }} NS · {{ e.eod.BLOCKED }} BL</p>
+          </div>
+          <div class="rounded-xl border border-line p-3">
+            <p class="text-[11px] font-semibold text-fg-muted">Latest Behavior</p>
+            @if (h.latestRating; as r) {
+              <p class="mt-1"><span class="rounded-md px-2 py-0.5 font-display text-lg font-semibold" [class]="ratingTone[r].soft">{{ r }}</span></p>
+              <p class="mt-1 truncate text-[11px] text-fg-subtle">{{ ratingLabels[r] }}</p>
+            } @else {
+              <p class="mt-1 font-display text-xl font-semibold">—</p>
+              <p class="text-[11px] text-fg-subtle">Not rated yet</p>
+            }
+          </div>
+        </section>
+
+        <!-- Trajectory -->
+        @if (e.trajectory.length) {
+          <section class="mt-5" aria-labelledby="trajectory-heading">
+            <h3 id="trajectory-heading" class="text-xs font-semibold uppercase tracking-wide text-fg-muted">
+              {{ e.trajectory.length }}-Week Behavior Trajectory
+            </h3>
+            <ol class="mt-2 flex items-center gap-1">
+              @for (t of e.trajectory; track t.week; let last = $last) {
+                <li class="flex flex-1 items-center gap-1">
+                  <span
+                    class="flex flex-1 flex-col items-center rounded-lg px-1 py-1.5 text-center"
+                    [class]="t.rating ? ratingTone[t.rating].soft : 'border border-dashed border-line text-fg-subtle'"
+                  >
+                    <span class="text-[10px] opacity-75">W{{ t.week }}</span>
+                    <span class="text-sm font-semibold">{{ t.rating ?? '—' }}</span>
+                  </span>
+                  @if (!last) {
+                    <ap-icon name="chevron-right" [size]="12" class="shrink-0 text-fg-subtle" />
+                  }
+                </li>
+              }
+            </ol>
+          </section>
+        }
+
+        <!-- Sprints -->
+        @if (hasSprints()) {
+          <section class="mt-5" aria-labelledby="passport-sprints">
+            <h3 id="passport-sprints" class="text-xs font-semibold uppercase tracking-wide text-fg-muted">
+              Sprint marks · avg {{ e.sprintAverage ?? '—' }}
+            </h3>
+            <ul class="mt-2 grid grid-cols-4 gap-1.5">
+              @for (m of e.sprints; track $index) {
+                <li
+                  class="rounded-lg px-1.5 py-1.5 text-center text-sm tabular-nums"
+                  [class]="m ? sprintTone(m.score) : 'border border-dashed border-line text-fg-subtle'"
+                  [title]="m ? m.projectName : 'Not marked'"
+                >
+                  <span class="block text-[10px] opacity-75">S{{ $index + 1 }}</span>
+                  <span class="font-semibold">{{ m?.score ?? '—' }}</span>
+                </li>
+              }
+            </ul>
+          </section>
+        }
+
+        <!-- Unified timeline -->
+        <section class="mt-6" aria-labelledby="timeline-heading">
+          <h3 id="timeline-heading" class="text-xs font-semibold uppercase tracking-wide text-fg-muted">Timeline</h3>
+          <div class="mt-2 flex flex-wrap gap-1.5" role="group" aria-label="Filter timeline">
+            @for (f of filters; track f) {
+              @if (f === 'ALL' || counts()[f] > 0) {
+                <button
+                  type="button"
+                  class="min-h-9 rounded-full px-3 text-xs font-semibold transition-colors"
+                  [class]="filter() === f ? 'bg-primary-500 text-white dark:bg-white dark:text-primary-900' : 'bg-surface-2 text-fg-muted hover:text-fg'"
+                  [attr.aria-pressed]="filter() === f"
+                  (click)="filter.set(f)"
+                >
+                  {{ filterLabel(f) }} <span class="tabular-nums opacity-70">{{ counts()[f] }}</span>
+                </button>
+              }
+            }
+          </div>
+
+          <ol class="mt-4 border-l border-line pl-4">
+            @for (t of visible(); track t.key) {
+              <li class="relative pb-4 last:pb-0">
+                <span class="absolute -left-[21px] top-1.5 size-2.5 rounded-full ring-4 ring-surface" [class]="dot[t.tone]"></span>
+                <p class="flex items-center gap-1.5 text-[11px] text-fg-subtle">
+                  <ap-icon [name]="kindMeta[t.kind].icon" [size]="12" />
+                  {{ kindMeta[t.kind].label }} · {{ t.date | date: 'EEE d MMM' }}
+                </p>
+                <p class="text-sm font-medium">{{ t.title }}</p>
+                @if (t.detail) {
+                  <p class="mt-0.5 text-sm text-fg-muted">{{ t.detail }}</p>
+                }
+              </li>
+            } @empty {
+              <li class="text-sm text-fg-muted">Nothing logged yet.</li>
+            }
+          </ol>
+          @if (remaining() > 0) {
+            <button type="button" class="btn btn-ghost mt-3 h-10 px-4 text-xs" (click)="showMore()">Show {{ remaining() }} more</button>
+          }
+        </section>
+      </div>
+
+      <footer class="border-t border-line p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+        <button type="button" class="btn btn-primary h-12 w-full" (click)="copyBrief.emit()">
+          <ap-icon name="copy" [size]="16" /> Copy 1-on-1 Brief
+        </button>
+      </footer>
+    </div>
+  }
+</dialog>

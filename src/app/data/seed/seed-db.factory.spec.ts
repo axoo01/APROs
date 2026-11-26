@@ -137,6 +137,20 @@ describe('createSeedDb', () => {
     expect(new Set(ratings.map((r) => r.rating)).size).toBeGreaterThanOrEqual(4);
   });
 
+  it('seeds Phase 2 sprint marks: Sprints 1–3 for 26-08-03, all four for the graduated 26-05-02', () => {
+    const wednesday = createSeedDb(new Date(2026, 10, 25, 10, 0, 0));
+    const marks = selectAll(wednesday.sprintMarks);
+    const byCode = (code: string) => {
+      const c = selectAll(wednesday.cohorts).find((x) => x.code === code)!;
+      return marks.filter((m) => m.cohortId === c.id);
+    };
+    expect(new Set(byCode('26-08-03').map((m) => m.sprintNumber))).toEqual(new Set([1, 2, 3]));
+    expect(new Set(byCode('26-05-02').map((m) => m.sprintNumber))).toEqual(new Set([1, 2, 3, 4]));
+    expect(byCode('26-11-04')).toHaveLength(0);
+    expect(marks.every((m) => m.score >= 0 && m.score <= 100 && m.projectName && m.deliverableSummary)).toBe(true);
+    expect(new Set(marks.map((m) => m.id)).size).toBe(marks.length);
+  });
+
   it('stays well within localStorage limits', () => {
     expect(JSON.stringify(db).length).toBeLessThan(1_500_000);
   });

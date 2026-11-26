@@ -1,0 +1,72 @@
+<ul class="grid grid-cols-2 gap-2.5 lg:grid-cols-4 lg:gap-3" aria-label="Cohort KPIs — tap a card to filter or rank the radar">
+  @for (t of tiles; track t.key) {
+    @let k = kpis();
+    @let on = active() === t.key;
+    <li>
+      <button
+        type="button"
+        class="glass flex h-full min-h-32 w-full flex-col rounded-2xl border p-4 text-left transition-[box-shadow,transform] active:scale-[0.99]"
+        [class.ring-2]="on"
+        [class.ring-accent]="on"
+        [attr.aria-pressed]="on"
+        (click)="kpiToggle.emit(t.key)"
+      >
+        <span class="flex items-center gap-1.5 text-xs font-semibold text-fg-muted">
+          <ap-icon [name]="t.icon" [size]="14" />
+          <span class="truncate">{{ t.label }}</span>
+        </span>
+        <span class="mt-2 font-display text-[1.75rem] font-semibold leading-none tabular-nums" aria-live="polite">
+          @switch (t.key) {
+            @case ('HEALTH') {
+              {{ k.thrivingRate | percent: '1.0-0' }}
+            }
+            @case ('ATTENDANCE') {
+              @if (k.hasAttendance) {
+                {{ k.attendance.attendanceRate | percent: '1.0-0' }}
+              } @else {
+                —
+              }
+            }
+            @case ('EOD') {
+              @if (k.eod.total) {
+                {{ k.onPace | percent: '1.0-0' }}
+              } @else {
+                —
+              }
+            }
+            @case ('RISK') {
+              <span [class.text-danger]="k.atRisk > 0">{{ k.atRisk + k.watchlist }}</span>
+            }
+          }
+        </span>
+        <span class="mt-2 text-[11px] font-medium text-fg-muted">
+          @switch (t.key) {
+            @case ('HEALTH') {
+              {{ k.thriving }} of {{ k.total }} thriving
+            }
+            @case ('ATTENDANCE') {
+              @if (k.hasAttendance) {
+                {{ k.attendance.punctualityRate | percent: '1.0-0' }} on time · {{ k.attendance.A }} A · {{ k.attendance.E }} E
+              } @else {
+                No attendance yet
+              }
+            }
+            @case ('EOD') {
+              @if (k.eod.total) {
+                On pace · {{ k.eod.NEEDS_SUPPORT }} NS · {{ k.eod.BLOCKED }} BL
+              } @else {
+                No EOD logged
+              }
+            }
+            @case ('RISK') {
+              <span class="text-danger">{{ k.atRisk }} at risk</span> · <span class="text-warning">{{ k.watchlist }} watchlist</span>
+            }
+          }
+        </span>
+        <span class="mt-auto pt-1 text-[11px] font-semibold" [class]="on ? 'text-accent' : 'text-fg-subtle'">
+          {{ on ? 'Tap to clear' : t.hint }}
+        </span>
+      </button>
+    </li>
+  }
+</ul>

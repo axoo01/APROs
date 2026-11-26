@@ -23,11 +23,14 @@ src/app/
                data-access/<name>.facade.ts             signals read model / commands
                <feature>.routes.ts                      exports <FEATURE>_ROUTES
   shared/      components/<name>/<name>.component.{ts,html,css} · directives/*.directive.ts · pipes/ · utils/*.util.ts
-               (cross-feature building blocks: roster-filter-bar, status-matrix, status-card-list, closeout-bar, date-scope-toolbar)
+               (cross-feature building blocks: roster-filter-bar, status-matrix, status-card-list, closeout-bar, date-scope-toolbar,
+               apprentice-passport; tones in utils/behavior-rating.const + utils/health-tier.const)
   testing/     provideTestApp()/setupTestApp() — FixedClock, MemoryStorage, zero latency
   app.routes.ts  guards + lazy `loadChildren` per feature only
 styles/tokens.css  Brand ramps + semantic roles (light/dark/.theme-dark)
 ```
+- `core/state/cohort-health.store.ts` (`CohortHealthStore`, page-provided, not root) = per-apprentice health + 360° passport +
+  1-on-1 brief; Dashboard and Apprentices (`/roster`, nav label "Apprentices") build their views on it.
 - Components/facades inject **ports only** (`CohortRepository`, `AttendanceRepository`, …). Adapters are bound once in
   `data.providers.ts`. Spring Boot swap = add `adapters/http/*` + one provider branch. Nothing else changes.
 - Port contract: `watch*()` streams emit immediately + on change; commands are cold, single-emission, error with a `DomainError`.
@@ -78,6 +81,15 @@ styles/tokens.css  Brand ramps + semantic roles (light/dark/.theme-dark)
 - **Weekly behavior** (`behavior.rules`): 6 tiers `+H +M +L` (positive) · `-H -M -L` (needs attention; `-L` = urgent),
   one per apprentice per cohort week (`id = apprenticeId:weekStart`, Monday). A rating pre-fills its standard definition
   unless the note is custom. Closeout = remaining → `+M`. Coaching screens default to Mine for a coach with a group.
+- **Health score** (`health-score.rules`): composite 0–100 = Attendance 35 · Punctuality 15 · EOD on-pace 25 · Behavior 25
+  (mean of the last 4 weeks' tiers, `+H`=1 … `-L`=0); missing EOD/behavior pillars are dropped and weights renormalized.
+  **At Risk**: absence streak ≥ 2, latest `-L`, behind streak ≥ 3 or ≥ 2 Blocked in the last 5 working days, or score < 60.
+  **Watchlist**: **Silent Drift** (attendance ≥ 90% but EOD dipped — behind streak ≥ 2 or recent on-pace ≥ 20 pts below overall and < 60% —
+  or behavior flagged / slid ≥ 2 tiers), a flagged rating, or score < 75. Weak pillars are reasons only, never a trigger.
+  **Phase 2 ready** = score ≥ 70 and not At Risk. **Systemic blocker** = same EOD tag (not `OTHER`) on NS/BL days for ≥ 2 apprentices this week.
+- **Sprints** (`sprint.rules`): Phase 2, Sprint 1–4, one mark per apprentice per sprint (`id = apprenticeId:S{n}`, upsert), whole score
+  0–100, required project + summary. `ADMIN` only (`sprint.record`). Dashboard adds sprint delivery for PHASE_2/COMPLETED cohorts; the Phase 2 readiness
+  forecast/report (+ CSV) lives on Apprentices for earlier phases.
 - **Coach filter** (`shared/utils/roster-scope.util`): `ALL` · `MINE` · a coach id — every active apprentice has a coach.
 - **Non-working days:** weekends + `cohort.nonWorkingDays` block recording in production; **Demo Mode never blocks** (warns only).
 - Dates are local `YYYY-MM-DD` (`IsoDate`); timestamps ISO-8601. Inject `Clock` — never `new Date()` in domain/services.
@@ -85,7 +97,7 @@ styles/tokens.css  Brand ramps + semantic roles (light/dark/.theme-dark)
 ## Design system (AmaliTech "Unified Experience Design" Figma)
 - Brand: navy `primary-500 #08283B`, orange `orange-500 #FF5A00`; headings Poppins, body Inter; radius-xl 12px.
 - Use semantic utilities (`bg-surface`, `text-fg-muted`, `bg-status-p-soft`, `btn btn-primary`, `card`, `field`, `glass`, `sheet`). No raw hex in components.
-- Modals = native `<dialog class="sheet">` (bottom sheet on phones, centered from `sm`). Status colours per P/L/A/E: `features/attendance/attendance-status.const.ts`.
+- Modals = native `<dialog class="sheet">` (bottom sheet on phones, centered from `sm`); detail panels = `<dialog class="slide-over">` (right-hand, full width on phones). Status colours per P/L/A/E: `features/attendance/attendance-status.const.ts`.
 - Glass: `glass` (floating layers), `glass-strong` (hero panels, e.g. login card), `glass-tile` (translucent content inside a glass
   panel, no blur). Never nest backdrop-filters or put one on an *ancestor* of menus/sheets (breaks child blur and `position: fixed`).
 - Avatars are one monochrome frosted badge (`--ap-avatar-*` tokens) — never coloured, so they can't clash with status/rating/specialization colours.
@@ -100,4 +112,6 @@ styles/tokens.css  Brand ramps + semantic roles (light/dark/.theme-dark)
   still get a small spec. Existing specs must keep passing (`npm run verify`). Types stay strict; structure stays production-grade.
 - Seed data is deterministic (`Prng`) — keep it stable across resets. Live cohort (`26-11-04`) = last 20 working days
   before today (clamped to its start), real 30-person roster (`LIVE_ROSTER`, 5 coaches) + planted absence streaks and
-  late runs ending yesterday, starting with the coach persona's (Axcel) group.
+  late runs ending yesterday, starting with the coach persona's (Axcel) group. Planted EOD behind streaks go to high-attendance
+  apprentices (Blocked days tagged `ENVIRONMENT`) with a dipped current-week rating → Silent Drift + a systemic blocker.
+  Sprint marks: `26-08-03` (Phase 2) Sprints 1–3 · `26-05-02` (completed) Sprints 1–4. Schema v4 (`sprintMarks`).

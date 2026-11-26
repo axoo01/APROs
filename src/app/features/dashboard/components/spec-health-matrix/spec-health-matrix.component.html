@@ -1,0 +1,69 @@
+<section aria-labelledby="spec-matrix-heading">
+  <div class="mb-3 flex items-end justify-between gap-3">
+    <div>
+      <h2 id="spec-matrix-heading" class="font-semibold">Specialization Health Matrix</h2>
+      <p class="mt-0.5 text-xs text-fg-subtle">Tap a track to filter the dashboard · tap again to clear</p>
+    </div>
+  </div>
+  <ul class="grid grid-cols-2 gap-2.5 md:grid-cols-3 xl:grid-cols-6">
+    @for (r of rows(); track r.specialization.id) {
+      @let on = active() === r.specialization.id;
+      @let dim = active() !== null && !on;
+      <li>
+        <button
+          type="button"
+          class="card flex h-full w-full flex-col gap-2 p-4 text-left transition-[box-shadow,opacity,transform] active:scale-[0.99]"
+          [class.ring-2]="on"
+          [class.ring-accent]="on"
+          [class.opacity-60]="dim"
+          [attr.aria-pressed]="on"
+          [attr.aria-label]="r.specialization.name + ': ' + r.headcount + ' apprentices, average score ' + r.averageScore"
+          (click)="specToggle.emit(r.specialization.id)"
+        >
+          <span class="flex items-center justify-between gap-2">
+            <span class="flex min-w-0 items-center gap-2">
+              <span class="size-2.5 shrink-0 rounded-full" [style.background-color]="tag(r.specialization.colorTag)"></span>
+              <span class="truncate text-sm font-semibold">{{ r.specialization.name }}</span>
+            </span>
+            <span class="inline-flex shrink-0 items-center gap-1 text-xs text-fg-muted">
+              <ap-icon name="users" [size]="12" />{{ r.headcount }}
+            </span>
+          </span>
+          <span class="font-display text-2xl font-semibold leading-none tabular-nums">
+            {{ r.averageScore }}<span class="ml-1 text-xs font-normal text-fg-subtle">avg score</span>
+          </span>
+          <span class="h-1.5 overflow-hidden rounded-full bg-surface-2" aria-hidden="true">
+            <span
+              class="block h-full rounded-full transition-[width] duration-500"
+              [style.width.%]="r.averageScore"
+              [style.background-color]="tag(r.specialization.colorTag)"
+            ></span>
+          </span>
+          <dl class="grid grid-cols-2 gap-x-2 gap-y-1 text-[11px] tabular-nums">
+            <dt class="text-fg-subtle">Att</dt>
+            <dd class="text-right font-semibold">{{ r.attendance.attendanceRate | percent: '1.0-0' }}</dd>
+            <dt class="text-fg-subtle">EOD OP</dt>
+            <dd class="text-right font-semibold">
+              @if (r.onPace !== null) {
+                {{ r.onPace | percent: '1.0-0' }}
+              } @else {
+                —
+              }
+            </dd>
+            <dt class="text-fg-subtle">Behavior</dt>
+            <dd class="text-right font-semibold">
+              <span class="text-success">+{{ r.positive }}</span> / <span class="text-danger">−{{ r.flagged }}</span>
+            </dd>
+          </dl>
+          @if (r.atRisk > 0) {
+            <span class="mt-auto self-start rounded-full bg-danger-soft px-2 py-0.5 text-[10px] font-semibold text-danger">
+              {{ r.atRisk }} at risk
+            </span>
+          }
+        </button>
+      </li>
+    } @empty {
+      <li class="col-span-full py-6 text-center text-sm text-fg-muted">No apprentices in this cohort yet.</li>
+    }
+  </ul>
+</section>

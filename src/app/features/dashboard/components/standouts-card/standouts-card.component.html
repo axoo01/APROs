@@ -1,0 +1,52 @@
+<section class="card flex h-full flex-col p-5" aria-labelledby="standouts-heading">
+  <h2 id="standouts-heading" class="flex items-center gap-2 font-semibold">
+    <ap-icon name="trending-up" [size]="18" class="text-success" /> Top 5 Cohort Standouts
+  </h2>
+  <p class="mt-1 text-xs text-fg-subtle">Ranked by composite readiness score</p>
+
+  <ol class="mt-3 flex flex-col gap-1">
+    @for (e of entries(); track e.id; let i = $index) {
+      <li>
+        <button
+          type="button"
+          class="flex w-full items-center gap-3 rounded-xl px-2 py-2.5 text-left transition-colors hover:bg-surface-2 focus-visible:bg-surface-2"
+          [attr.aria-label]="'#' + (i + 1) + ' ' + e.name + ', score ' + e.health.score + ' — open passport'"
+          (click)="openPassport.emit(e.id)"
+        >
+          <span
+            class="w-7 shrink-0 text-center font-display text-sm font-semibold tabular-nums"
+            [class]="i === 0 ? 'text-accent' : 'text-fg-subtle'"
+            >#{{ i + 1 }}</span
+          >
+          <ap-avatar [name]="e.name" [src]="e.apprentice.avatarUrl" [size]="36" />
+          <span class="min-w-0 flex-1">
+            <span class="flex items-center gap-2">
+              <span class="truncate text-sm font-semibold">{{ e.name }}</span>
+              @if (e.specialization; as s) {
+                <span class="inline-flex shrink-0 items-center gap-1 rounded-full bg-surface-2 px-1.5 py-0.5 text-[10px] font-semibold text-fg-muted">
+                  <span class="size-1.5 rounded-full" [style.background-color]="tag(s.colorTag)"></span>{{ s.code }}
+                </span>
+              }
+            </span>
+            <span class="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-[11px] tabular-nums text-fg-muted">
+              <span>{{ e.attendance.attendanceRate | percent: '1.0-0' }} Att</span>
+              @if (e.eod.total) {
+                <span aria-hidden="true">·</span><span>{{ onPace(e.eod) | percent: '1.0-0' }} OP</span>
+              }
+              @if (e.health.latestRating; as r) {
+                <span aria-hidden="true">·</span>
+                <span class="rounded px-1 font-semibold" [class]="ratingTone[r].soft">{{ r }}</span>
+              }
+            </span>
+          </span>
+          <span class="shrink-0 text-right">
+            <span class="block font-display text-lg font-semibold leading-none tabular-nums">{{ e.health.score }}</span>
+            <span class="text-[10px] text-fg-subtle">score</span>
+          </span>
+        </button>
+      </li>
+    } @empty {
+      <li class="py-6 text-center text-sm text-fg-muted">No apprentices in scope.</li>
+    }
+  </ol>
+</section>

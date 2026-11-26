@@ -11,7 +11,7 @@ import {
 import { AvatarComponent } from '../../../../shared/components/avatar/avatar.component';
 import { IconComponent } from '../../../../shared/components/icon/icon.component';
 import { colorTagVar } from '../../../../shared/utils/color-tag.util';
-import { RATING_TONE } from '../../behavior-rating.const';
+import { RATING_TONE } from '../../../../shared/utils/behavior-rating.const';
 import type { BehaviorEntry } from '../../data-access/behavior.facade';
 
 export interface RateEvent {

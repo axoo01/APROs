@@ -8,6 +8,11 @@ import {
   eodId,
   onPaceRate,
   summarizeAttendance,
+  sprintBand,
+  sprintMarkId,
+  type SprintBand,
+  type SprintMark,
+  type SprintNumber,
   tallyEod,
   defaultCohortDisplayName,
   buildCohortCode,
@@ -44,6 +49,7 @@ const HISTORY_SEED = 0x11_0426;
 const PATTERN_SEED = 0x57_4eaf;
 const EOD_SEED = 0xe0_d2026;
 const BEHAVIOR_SEED = 0xbe_4a71;
+const SPRINT_SEED = 0x5b_2026;
 
 /** The live demo cohort's history covers (at most) the last 4 weeks of working days before today. */
 export const LIVE_HISTORY_WORKING_DAYS = 20;
@@ -147,6 +153,8 @@ interface CohortSeed {
   readonly withHistory: boolean;
   /** The cohort demoed live: real roster, recent-window history + planted patterns. */
   readonly live?: boolean;
+  /** Phase 2 sprint marks to seed: how many sprints are done and their cadence (days). */
+  readonly sprints?: { readonly count: number; readonly cadenceDays: number };
 }
 
 const COHORTS: readonly CohortSeed[] = [
@@ -159,11 +167,13 @@ const COHORTS: readonly CohortSeed[] = [
     sequenceNumber: 2, phase1StartDate: '2026-05-04', phase1EndDate: '2026-07-24',
     phase2StartDate: '2026-08-03', phase2EndDate: '2026-11-20',
     roster: { FS: 6, JB: 6, DE: 4, DO: 4, QA: 4 }, graduated: true, withdrawn: 0, withHistory: false,
+    sprints: { count: 4, cadenceDays: 28 },
   },
   {
     sequenceNumber: 3, phase1StartDate: '2026-08-03', phase1EndDate: '2026-10-23',
     phase2StartDate: '2026-11-02', phase2EndDate: '2027-02-19',
     roster: { FS: 7, JB: 7, DE: 5, DO: 4, QA: 4, PB: 3 }, graduated: false, withdrawn: 1, withHistory: true,
+    sprints: { count: 3, cadenceDays: 7 },
   },
   {
     sequenceNumber: 4, phase1StartDate: '2026-11-02', phase1EndDate: '2027-01-29',
@@ -327,8 +337,10 @@ export function createSeedDb(now: Date): DbSchema {
   }
 
   const attendance = buildHistory(cohorts, COHORTS, apprentices, profiles, withdrawnIds, coaches, today);
-  const eodPacing = buildEodHistory(cohorts, COHORTS, apprentices, profiles, attendance);
-  const weeklyBehavior = buildBehaviorHistory(cohorts, COHORTS, apprentices, attendance, eodPacing, today);
+  const { records: eodPacing, behindIds } = buildEodHistory(cohorts, COHORTS, apprentices, profiles, attendance);
+  const weeklyBehavior = buildBehaviorHistory(cohorts, COHORTS, apprentices, attendance, eodPacing, behindIds, today);
+  const admin = users.find((u) => u.role === 'ADMIN')!;
+  const sprintMarks = buildSprintMarks(cohorts, COHORTS, apprentices, profiles, specializations, admin.id, today);
 
   return {
     schemaVersion: DB_SCHEMA_VERSION,
@@ -340,6 +352,7 @@ export function createSeedDb(now: Date): DbSchema {
     attendance: tableFrom(attendance),
     eodPacing: tableFrom(eodPacing),
     weeklyBehavior: tableFrom(weeklyBehavior),
+    sprintMarks: tableFrom(sprintMarks),
   };
 }
 
@@ -488,6 +501,10 @@ const EOD_CUSTOM_NOTES: Readonly<Partial<Record<EodTag, readonly string[]>>> = {
 
 /** Behind streaks (consecutive Needs Support / Blocked days ending yesterday) planted in the live cohort. */
 const PLANTED_BEHIND_STREAKS: readonly number[] = [3, 2, 4];
+/** Planted Blocked days share this tag → a "systemic blocker" callout on the dashboard. */
+const PLANTED_BLOCKER_TAG: EodTag = 'ENVIRONMENT';
+/** Planted streaks go to apprentices with high attendance, so they read as "Silent Drift" rather than absence. */
+const DRIFT_MIN_ATTENDANCE = 0.9;
 
 /**
  * EOD history for the live cohort, only on days the apprentice was present (P/L) — absent days have no EOD.
@@ -500,23 +517,23 @@ function buildEodHistory(
   apprentices: readonly Apprentice[],
   profiles: ReadonlyMap<Id, Profile>,
   attendance: readonly AttendanceRecord[],
-): EodPacingRecord[] {
+): { records: EodPacingRecord[]; behindIds: Id[] } {
   const rng = new Prng(EOD_SEED);
   const liveIdx = seeds.findIndex((c) => c.live);
   const cohort = cohorts[liveIdx];
-  if (!cohort) return [];
+  if (!cohort) return { records: [], behindIds: [] };
 
   const present = attendance.filter((r) => r.cohortId === cohort.id && (r.status === 'P' || r.status === 'L'));
   const presentKeys = new Set(present.map((r) => r.id));
   const coachOf = new Map(apprentices.map((a) => [a.id, a.coachId]));
   const records = new Map<Id, EodPacingRecord>();
 
-  const make = (apprenticeId: Id, date: IsoDate, status: EodStatus, recorder: Id): EodPacingRecord => {
+  const make = (apprenticeId: Id, date: IsoDate, status: EodStatus, recorder: Id, forcedTag?: EodTag): EodPacingRecord => {
     let tag: EodTag | null = null;
     let note: string | null = null;
     // On Pace days get a highlight ~30% of the time; behind days almost always carry a blocker.
     if (status !== 'ON_PACE' || rng.next() < 0.3) {
-      const preset = rng.pick(EOD_PRESETS[status]);
+      const preset = EOD_PRESETS[status].find((p) => p.tag === forcedTag) ?? rng.pick(EOD_PRESETS[status]);
       tag = preset.tag;
       const custom = EOD_CUSTOM_NOTES[preset.tag];
       note = custom?.length && rng.next() < 0.35 ? rng.pick(custom) : rng.next() < 0.85 ? preset.note : null;
@@ -547,20 +564,25 @@ function buildEodHistory(
   const days = [...new Set(present.map((r) => r.date))].sort();
   const members = apprentices.filter((a) => a.cohortId === cohort.id && a.status === 'ACTIVE');
   const used = new Set<Id>();
+  const behindIds: Id[] = [];
+  const attendanceOf = (id: Id) => summarizeAttendance(attendance.filter((r) => r.apprenticeId === id)).attendanceRate;
   for (const length of PLANTED_BEHIND_STREAKS) {
     const window = days.slice(-(length + 1));
-    const candidate = members.find(
+    const eligible = members.filter(
       (a) => !used.has(a.id) && window.length === length + 1 && window.every((d) => presentKeys.has(attendanceId(a.id, d))),
     );
+    const candidate = eligible.find((a) => attendanceOf(a.id) >= DRIFT_MIN_ATTENDANCE) ?? eligible[0];
     if (!candidate) continue;
     used.add(candidate.id);
+    behindIds.push(candidate.id);
     const recorder = candidate.coachId ?? coachOf.get(candidate.id) ?? present[0]!.recordedBy;
     window.forEach((d, i) => {
       const status: EodStatus = i === 0 ? 'ON_PACE' : i % 2 === 0 ? 'BLOCKED' : 'NEEDS_SUPPORT';
-      records.set(eodId(candidate.id, d), make(candidate.id, d, status, recorder));
+      const tag = status === 'BLOCKED' ? PLANTED_BLOCKER_TAG : undefined;
+      records.set(eodId(candidate.id, d), make(candidate.id, d, status, recorder, tag));
     });
   }
-  return [...records.values()];
+  return { records: [...records.values()], behindIds };
 }
 
 // ── Weekly behavior ───────────────────────────────────────────────────────────
@@ -577,6 +599,9 @@ const BEHAVIOR_CUSTOM_NOTES: Readonly<Record<BehaviorRating, readonly string[]>>
   '-M': ['Skipped two EOD updates; agreed a daily reminder.'],
   '-L': ['Unreachable for most of the week — escalated to the cohort lead.'],
 };
+
+/** Current-week ratings forced on the planted behind-streak apprentices (same order) — EOD + behavior dip together. */
+const PLANTED_DRIFT_RATINGS: readonly BehaviorRating[] = ['-M', '-M', '-H'];
 
 /** Maps a week's attendance + EOD signal (0–1) to the 6-tier scale. */
 function ratingFor(score: number): BehaviorRating {
@@ -598,6 +623,7 @@ function buildBehaviorHistory(
   apprentices: readonly Apprentice[],
   attendance: readonly AttendanceRecord[],
   eod: readonly EodPacingRecord[],
+  driftIds: readonly Id[],
   today: IsoDate,
 ): WeeklyBehaviorRecord[] {
   const rng = new Prng(BEHAVIOR_SEED);
@@ -607,7 +633,7 @@ function buildBehaviorHistory(
   const current = weeks.at(-1);
   const rated = [...weeks.slice(0, -1).slice(-BEHAVIOR_HISTORY_WEEKS), ...(current ? [current] : [])];
   const members = apprentices.filter((a) => a.cohortId === cohort.id && a.status === 'ACTIVE');
-  const out: WeeklyBehaviorRecord[] = [];
+  const out = new Map<Id, WeeklyBehaviorRecord>();
 
   for (const week of rated) {
     const isCurrent = week === current;
@@ -622,7 +648,7 @@ function buildBehaviorHistory(
       const note = rng.next() < 0.3 ? rng.pick(BEHAVIOR_CUSTOM_NOTES[rating]) : BEHAVIOR_DEFINITIONS[rating];
       const day = week.end < today ? week.end : addDays(today, -1);
       const recordedAt = at(day, 16, rng.int(0, 55));
-      out.push({
+      out.set(behaviorId(a.id, week.start), {
         id: behaviorId(a.id, week.start),
         apprenticeId: a.id,
         cohortId: cohort.id,
@@ -636,6 +662,111 @@ function buildBehaviorHistory(
       });
     }
   }
+
+  // Planted drift: this week's rating dips for the apprentices whose EOD is sliding.
+  if (current) {
+    const day = addDays(today, -1);
+    driftIds.forEach((id, i) => {
+      const a = members.find((m) => m.id === id);
+      const rating = PLANTED_DRIFT_RATINGS[i];
+      if (!a || !rating) return;
+      const recordedAt = at(day, 16, 30);
+      out.set(behaviorId(id, current.start), {
+        id: behaviorId(id, current.start),
+        apprenticeId: id,
+        cohortId: cohort.id,
+        weekStart: current.start,
+        rating,
+        note: BEHAVIOR_DEFINITIONS[rating],
+        recordedBy: a.coachId ?? id,
+        recordedAt,
+        createdAt: recordedAt,
+        updatedAt: recordedAt,
+      });
+    });
+  }
+  return [...out.values()];
+}
+
+// ── Phase 2 sprint marks ──────────────────────────────────────────────────────
+
+/** Four projects per specialization (one per sprint), keyed by specialization code. */
+const SPRINT_PROJECTS: Readonly<Record<string, readonly [string, string, string, string]>> = {
+  FS: ['Taskboard SPA', 'Realtime Chat', 'E-commerce Storefront', 'Capstone: Learning Portal'],
+  JB: ['Inventory REST API', 'Payments Service', 'Event-driven Orders', 'Capstone: HR Platform API'],
+  DE: ['Sales ETL Pipeline', 'Streaming Ingestion', 'Warehouse Data Model', 'Capstone: Analytics Lakehouse'],
+  DO: ['CI/CD Pipeline', 'Container Platform', 'Observability Stack', 'Capstone: IaC Landing Zone'],
+  QA: ['E2E Test Suite', 'API Contract Tests', 'Performance Test Plan', 'Capstone: Quality Gates'],
+  PB: ['Booking Service API', 'Async Task Queue', 'Recommendation Service', 'Capstone: Clinic Platform'],
+};
+
+const SPRINT_SCORE_RANGE: Readonly<Record<Profile, readonly [number, number]>> = {
+  star: [88, 98],
+  steady: [72, 90],
+  'late-riser': [68, 86],
+  'at-risk': [52, 74],
+};
+
+const SPRINT_SUMMARIES: Readonly<Record<SprintBand, readonly string[]>> = {
+  STRONG: [
+    'Delivered every story with clean PRs and solid test coverage.',
+    'Shipped ahead of the demo; strong code-review feedback.',
+    'Owned the hardest story and unblocked teammates.',
+  ],
+  SOLID: [
+    'Delivered the core scope; minor polish carried over.',
+    'Met the sprint goal; tests cover the main paths.',
+    'Good delivery; documentation needs tightening.',
+  ],
+  DEVELOPING: [
+    'Partial delivery: two stories carried over.',
+    'Core feature works but lacks tests; pairing recommended.',
+    'Struggled with estimates; scope reduced mid-sprint.',
+  ],
+};
+
+/** Sprint marks for cohorts in (or past) Phase 2: one per non-withdrawn apprentice per finished sprint. */
+function buildSprintMarks(
+  cohorts: readonly Cohort[],
+  seeds: readonly CohortSeed[],
+  apprentices: readonly Apprentice[],
+  profiles: ReadonlyMap<Id, Profile>,
+  specializations: readonly Specialization[],
+  adminId: Id,
+  today: IsoDate,
+): SprintMark[] {
+  const rng = new Prng(SPRINT_SEED);
+  const codeOf = new Map(specializations.map((s) => [s.id, s.code]));
+  const out: SprintMark[] = [];
+  cohorts.forEach((cohort, idx) => {
+    const plan = seeds[idx]?.sprints;
+    if (!plan) return;
+    const members = apprentices.filter((a) => a.cohortId === cohort.id && a.status !== 'WITHDRAWN');
+    for (let n = 1; n <= plan.count; n++) {
+      const sprintNumber = n as SprintNumber;
+      const end = addDays(cohort.phase2StartDate, plan.cadenceDays * n - 3);
+      if (end >= today) break;
+      for (const a of members) {
+        const code = codeOf.get(a.specializationId) ?? 'FS';
+        const [lo, hi] = SPRINT_SCORE_RANGE[profiles.get(a.id) ?? 'steady'];
+        const score = rng.int(lo, hi);
+        const recordedAt = at(end, 15, rng.int(0, 55));
+        out.push({
+          id: sprintMarkId(a.id, sprintNumber),
+          apprenticeId: a.id,
+          cohortId: cohort.id,
+          sprintNumber,
+          projectName: (SPRINT_PROJECTS[code] ?? SPRINT_PROJECTS['FS']!)[n - 1]!,
+          score,
+          deliverableSummary: rng.pick(SPRINT_SUMMARIES[sprintBand(score)]),
+          recordedBy: adminId,
+          recordedAt,
+          createdAt: recordedAt,
+          updatedAt: recordedAt,
+        });
+      }
+    }
+  });
   return out;
 }
 

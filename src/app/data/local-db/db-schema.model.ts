@@ -7,11 +7,12 @@ import {
   type EodPacingRecord,
   type IsoDateTime,
   type Specialization,
+  type SprintMark,
   type User,
   type WeeklyBehaviorRecord,
 } from '../../domain';
 
-export const DB_SCHEMA_VERSION = 3;
+export const DB_SCHEMA_VERSION = 4;
 export const DB_STORAGE_KEY = 'apros.db';
 
 export interface DbSchema {
@@ -26,6 +27,8 @@ export interface DbSchema {
   readonly eodPacing: EntityTable<EodPacingRecord>;
   /** Since v3. */
   readonly weeklyBehavior: EntityTable<WeeklyBehaviorRecord>;
+  /** Since v4. */
+  readonly sprintMarks: EntityTable<SprintMark>;
 }
 
 export type DbTableKey = Exclude<keyof DbSchema, 'schemaVersion' | 'seededAt'>;
@@ -52,6 +55,8 @@ export const MIGRATIONS: Readonly<Record<number, (db: DbSchema) => DbSchema>> = 
   1: (db) => ({ ...db, schemaVersion: 2, eodPacing: emptyTable<EodPacingRecord>() }),
   // v3: weekly behavior table.
   2: (db) => ({ ...db, schemaVersion: 3, weeklyBehavior: emptyTable<WeeklyBehaviorRecord>() }),
+  // v4: Phase 2 sprint marks.
+  3: (db) => ({ ...db, schemaVersion: 4, sprintMarks: emptyTable<SprintMark>() }),
 };
 
 export function migrate(db: DbSchema): DbSchema | null {

@@ -195,6 +195,29 @@
   }
 }
 
+/* Native <dialog> as a right-hand slide-over panel (full width on phones). Same top-layer rules as `sheet`. */
+@utility slide-over {
+  margin: 0 0 0 auto;
+  width: 100%;
+  max-width: 34rem;
+  height: 100dvh;
+  max-height: 100dvh;
+  padding: 0;
+  border: 0;
+  border-left: 1px solid var(--ap-line);
+  background-color: var(--ap-surface);
+  color: var(--ap-fg);
+  box-shadow: var(--shadow-float);
+  overscroll-behavior: contain;
+  &[open] {
+    animation: slide-over-in 280ms var(--ease-out-quart);
+  }
+  &::backdrop {
+    background-color: color-mix(in oklab, var(--color-primary-900) 45%, transparent);
+    backdrop-filter: blur(4px);
+  }
+}
+
 @utility pb-safe {
   padding-bottom: env(safe-area-inset-bottom);
 }
@@ -228,6 +251,15 @@
 @keyframes sheet-in {
   from {
     transform: translateY(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes slide-over-in {
+  from {
+    transform: translateX(100%);
   }
   to {
     transform: none;

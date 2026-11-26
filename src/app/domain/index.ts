@@ -13,3 +13,5 @@ export * from './rules/eod.rules';
 export * from './rules/behavior.rules';
 export * from './rules/permissions.rules';
 export * from './utils/entity-table.util';
+export * from './rules/health-score.rules';
+export * from './rules/sprint.rules';

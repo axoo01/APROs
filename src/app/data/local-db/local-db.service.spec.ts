@@ -93,6 +93,7 @@ describe('LocalDbService', () => {
     expect(migrated?.schemaVersion).toBe(DB_SCHEMA_VERSION);
     expect(migrated?.eodPacing).toEqual({ ids: [], entities: {} });
     expect(migrated?.weeklyBehavior).toEqual({ ids: [], entities: {} });
+    expect(migrated?.sprintMarks).toEqual({ ids: [], entities: {} });
     expect(migrated?.attendance.ids).toEqual(['x']);
   });
 });

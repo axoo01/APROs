@@ -1,0 +1,26 @@
+<section class="card p-4 sm:px-5" aria-labelledby="readiness-forecast">
+  <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-5">
+    <p id="readiness-forecast" class="min-w-0 text-sm lg:shrink-0" aria-live="polite">
+      <span class="font-semibold">Phase 2 Readiness Forecast{{ scopeLabel() ? ' · ' + scopeLabel() : '' }}:</span>
+      <span class="ml-1 font-display font-semibold tabular-nums text-success">{{ counts().readyRate | percent: '1.0-0' }} Ready</span>
+      <span class="text-fg-muted"> · <span class="tabular-nums">{{ counts().ready }}</span> Ready · </span>
+      <span class="tabular-nums text-warning">{{ counts().needsPairing }} Needs Pairing Support</span>
+    </p>
+    <div class="min-w-0 flex-1"><ap-segmented-bar [segments]="segments()" /></div>
+    <div class="flex shrink-0 gap-2">
+      <button
+        type="button"
+        class="btn btn-ghost h-11 flex-1 px-3 text-sm lg:flex-none"
+        aria-controls="readiness-report"
+        [attr.aria-expanded]="expanded()"
+        (click)="toggleReport.emit()"
+      >
+        {{ expanded() ? 'Hide Report' : 'View Full Report' }}
+        <ap-icon name="chevron-down" [size]="16" class="transition-transform" [class.rotate-180]="expanded()" />
+      </button>
+      <button type="button" class="btn btn-primary h-11 flex-1 px-3 text-sm lg:flex-none" [disabled]="counts().total === 0" (click)="exportReport.emit()">
+        <ap-icon name="download" [size]="16" /> Export Report (CSV)
+      </button>
+    </div>
+  </div>
+</section>

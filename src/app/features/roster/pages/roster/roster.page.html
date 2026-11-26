@@ -1,52 +1,173 @@
-<ap-page-header eyebrow="People" title="Roster" [subtitle]="rows().length + ' of ' + apprentices().length + ' apprentices'" />
+<ap-page-header
+  eyebrow="People"
+  title="Apprentices"
+  [subtitle]="(f.cohort()?.displayName ?? '') + ' · ' + f.rows().length + ' of ' + f.total() + ' apprentices'"
+/>
+
+@if (f.showReadiness()) {
+  <div class="mb-5">
+    <ap-readiness-banner
+      [counts]="f.readiness()"
+      [expanded]="reportOpen()"
+      [scopeLabel]="specName()"
+      (toggleReport)="reportOpen.set(!reportOpen())"
+      (exportReport)="f.exportReport()"
+    />
+    @if (reportOpen()) {
+      <ap-readiness-report
+        [needsPairing]="f.report().needsPairing"
+        [ready]="f.report().ready"
+        (openPassport)="f.openPassport($event)"
+      />
+    }
+  </div>
+}
 
 <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-  <label class="relative block sm:w-80">
-    <span class="sr-only">Search apprentices</span>
-    <ap-icon name="search" [size]="18" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-fg-subtle" />
-    <input
-      type="search"
-      class="field pl-11"
-      placeholder="Search name, email or coach"
-      [value]="query()"
-      (input)="query.set($any($event.target).value)"
-    />
-  </label>
+  @if (!reportOpen()) {
+    <label class="relative block sm:w-80">
+      <span class="sr-only">Search apprentices</span>
+      <ap-icon name="search" [size]="18" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-fg-subtle" />
+      <input
+        type="search"
+        class="field pl-11"
+        placeholder="Search name, email or coach"
+        [value]="f.query()"
+        (input)="f.query.set($any($event.target).value)"
+      />
+    </label>
+  }
   <div class="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0" role="group" aria-label="Filter by specialization">
-    <button type="button" class="chip" [attr.aria-pressed]="specFilter() === null" (click)="specFilter.set(null)">All</button>
-    @for (s of refs.specializations(); track s.id) {
-      <button type="button" class="chip" [attr.aria-pressed]="specFilter() === s.id" (click)="toggleSpec(s.id)">
+    <button type="button" class="chip" [attr.aria-pressed]="f.specFilter() === null" (click)="f.specFilter.set(null)">All</button>
+    @for (s of f.specializations(); track s.id) {
+      <button type="button" class="chip" [attr.aria-pressed]="f.specFilter() === s.id" (click)="f.toggleSpec(s.id)">
         <span class="size-2 rounded-full" [style.background-color]="tag(s.colorTag)"></span>{{ s.code }}
       </button>
     }
   </div>
+  @if (!reportOpen()) {
+    <label class="flex items-center gap-2 text-sm text-fg-muted md:hidden">
+      Sort
+      <select class="field flex-1 text-sm" (change)="pickSort($any($event.target).value)">
+        @for (o of sortOptions; track o.key) {
+          @if (o.key !== 'READINESS' || f.showReadiness()) {
+            <option [value]="o.key + ':asc'" [selected]="f.sort().key === o.key && f.sort().dir === 'asc'">{{ o.label }} ↑</option>
+            <option [value]="o.key + ':desc'" [selected]="f.sort().key === o.key && f.sort().dir === 'desc'">{{ o.label }} ↓</option>
+          }
+        }
+      </select>
+    </label>
+  }
 </div>
 
-<div class="card overflow-hidden">
-  <ul class="divide-y divide-line">
-    @for (r of rows(); track r.a.id) {
-      <li class="flex items-center gap-3 px-4 py-3 sm:px-5">
-        <ap-avatar [name]="r.name" [size]="40" />
-        <div class="min-w-0 flex-1">
-          <p class="truncate font-medium">{{ r.name }}</p>
-          <p class="truncate text-xs text-fg-subtle">{{ r.a.email }}</p>
-        </div>
-        <span class="hidden items-center gap-1.5 text-sm text-fg-muted md:inline-flex md:w-56">
-          <span class="size-2 rounded-full" [style.background-color]="r.specColor"></span>{{ r.specName }}
-        </span>
-        <span class="hidden w-44 text-sm sm:block">
-          @if (r.coachName) {
-            <span class="text-fg-muted">{{ r.coachName }}</span>
-          } @else {
-            <span class="inline-flex items-center gap-1 rounded-full bg-warning-soft px-2 py-0.5 text-xs font-semibold text-warning">
-              <ap-icon name="user-x" [size]="12" /> Unassigned
-            </span>
+@if (!reportOpen()) {
+  <!-- Desktop: fixed-layout table so every column lines up. -->
+  <div class="card hidden overflow-hidden md:block">
+    <table class="w-full table-fixed text-sm">
+      <thead>
+        <tr class="border-b border-line bg-surface-2/50 text-left text-xs text-fg-muted">
+          @for (c of columns(); track c.label; let first = $first) {
+            <th scope="col" class="py-2.5 font-semibold" [class]="c.width + (first ? ' pl-5 pr-3' : ' px-3')" [attr.aria-sort]="ariaSort(c.sort)">
+              @if (c.sort; as key) {
+                <button
+                  type="button"
+                  class="-mx-1.5 inline-flex min-h-9 items-center gap-1 rounded-md px-1.5 transition-colors hover:text-fg"
+                  [class.text-fg]="f.sort().key === key"
+                  (click)="f.sortBy(key)"
+                >
+                  {{ c.label }}
+                  <ap-icon
+                    name="chevron-down"
+                    [size]="14"
+                    class="transition-transform"
+                    [class.rotate-180]="f.sort().key === key && f.sort().dir === 'asc'"
+                    [class.opacity-30]="f.sort().key !== key"
+                  />
+                </button>
+              } @else {
+                {{ c.label }}
+              }
+            </th>
           }
-        </span>
-        <span class="inline-flex w-[5.5rem] justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold" [class]="r.statusStyle">{{ r.a.status | titlecase }}</span>
+          <th scope="col" class="w-10"><span class="sr-only">Open</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (r of f.rows(); track r.id) {
+          @let h = r.health;
+          <tr
+            class="border-b border-line/70 last:border-0"
+            [class]="h ? 'cursor-pointer transition-colors hover:bg-surface-2/60' : 'opacity-60'"
+            (click)="h && f.openPassport(r.id)"
+          >
+            <td class="py-3 pl-5 pr-3">
+              @if (h) {
+                <button type="button" class="flex w-full min-w-0 items-center gap-3 text-left" [attr.aria-label]="r.name + ' — open 360° passport'" (click)="$event.stopPropagation(); f.openPassport(r.id)">
+                  <ap-avatar [name]="r.name" [src]="r.apprentice.avatarUrl" [size]="40" />
+                  <span class="min-w-0 flex-1">
+                    <span class="block truncate font-medium text-fg">{{ r.name }}</span>
+                    <span class="block truncate text-xs text-fg-subtle">{{ r.apprentice.email }}</span>
+                  </span>
+                </button>
+              } @else {
+                <span class="flex min-w-0 items-center gap-3">
+                  <ap-avatar [name]="r.name" [src]="r.apprentice.avatarUrl" [size]="40" />
+                  <span class="min-w-0 flex-1">
+                    <span class="block truncate font-medium text-fg">{{ r.name }}</span>
+                    <span class="block truncate text-xs text-fg-subtle">{{ r.apprentice.email }}</span>
+                  </span>
+                </span>
+              }
+            </td>
+            <td class="px-3 py-3">
+              <span class="flex min-w-0 items-center gap-1.5 text-fg-muted">
+                <span class="size-2 shrink-0 rounded-full" [style.background-color]="r.specialization ? tag(r.specialization.colorTag) : 'transparent'"></span>
+                <span class="truncate">{{ r.specialization?.name ?? '—' }}</span>
+              </span>
+            </td>
+            <td class="truncate px-3 py-3 text-fg-muted">{{ r.coachName ?? 'Unassigned' }}</td>
+            <td class="px-3 py-3"><ap-vibe-check [entry]="r.health" /></td>
+            <td class="px-3 py-3"><span class="inline-flex w-[8.5rem] justify-center rounded-full py-0.5 text-[11px] font-semibold tabular-nums" [class]="standingTone(r)">{{ standingLabel(r) }}</span></td>
+            <td class="pr-4 text-right">
+              @if (h) {
+                <ap-icon name="chevron-right" [size]="16" class="text-fg-subtle" />
+              }
+            </td>
+          </tr>
+        } @empty {
+          <tr><td [attr.colspan]="columns().length + 1" class="px-5 py-12 text-center text-fg-muted">No apprentices match your filters.</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Phones: cards with the same fixed vibe slots. -->
+  <ul class="card divide-y divide-line overflow-hidden md:hidden">
+    @for (r of f.rows(); track r.id) {
+      <li>
+        <button
+          type="button"
+          class="flex w-full flex-col gap-2 px-4 py-3 text-left disabled:opacity-60"
+          [disabled]="!r.health"
+          (click)="f.openPassport(r.id)"
+        >
+          <span class="flex w-full min-w-0 items-center gap-3">
+            <ap-avatar [name]="r.name" [src]="r.apprentice.avatarUrl" [size]="40" />
+            <span class="min-w-0 flex-1">
+              <span class="block truncate font-medium text-fg">{{ r.name }}</span>
+              <span class="block truncate text-xs text-fg-subtle">{{ r.specialization?.code ?? '—' }} · {{ r.coachName ?? 'Unassigned' }}</span>
+            </span>
+          </span>
+          <span class="flex items-center justify-between gap-2 pl-[3.25rem]">
+            <ap-vibe-check [entry]="r.health" />
+            <span class="inline-flex w-[8.5rem] justify-center rounded-full py-0.5 text-[11px] font-semibold tabular-nums" [class]="standingTone(r)">{{ standingLabel(r) }}</span>
+          </span>
+        </button>
       </li>
     } @empty {
       <li class="px-5 py-12 text-center text-sm text-fg-muted">No apprentices match your filters.</li>
     }
   </ul>
-</div>
+}
+
+<ap-apprentice-passport [passport]="f.passport()" (closed)="f.closePassport()" (copyBrief)="copyBrief()" />
