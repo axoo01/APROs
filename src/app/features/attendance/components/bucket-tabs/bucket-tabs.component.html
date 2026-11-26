@@ -1,4 +1,11 @@
-<div role="tablist" aria-label="Attendance buckets" class="grid grid-cols-3 gap-1.5 sm:gap-2">
+<div role="tablist" aria-label="Attendance buckets" class="relative grid grid-cols-3 gap-[var(--gap)]">
+  <span
+    class="lens tab-lens pointer-events-none absolute inset-y-0 left-0 rounded-xl"
+    [style.--n]="count"
+    [style.--i]="activeIndex()"
+    [style.--lens-tone]="activeTone()"
+    aria-hidden="true"
+  ></span>
   @for (t of tabs(); track t.key) {
     <button
       type="button"
@@ -7,21 +14,22 @@
       [attr.aria-selected]="active() === t.key"
       [attr.aria-controls]="panelId()"
       [tabindex]="active() === t.key ? 0 : -1"
-      class="flex min-h-[4.75rem] flex-col items-start justify-between rounded-xl px-3 py-2.5 text-left transition-[background-color,color,box-shadow,transform] duration-200 active:scale-[0.98] sm:px-4"
-      [class]="active() === t.key ? t.active + ' shadow-[var(--shadow-float)]' : 'text-fg hover:bg-surface-2/70'"
+      class="flex min-h-[4.75rem] flex-col items-start justify-between relative rounded-xl px-3 py-2.5 text-left transition-[background-color,color,transform] duration-200 active:scale-[0.98] sm:px-4"
+      [class]="active() === t.key ? 'text-fg' : 'text-fg-muted hover:bg-surface-2'"
       (click)="active.set(t.key)"
       (keydown)="onKey($event)"
     >
       <span class="flex w-full items-center gap-1.5 text-[11px] font-semibold leading-tight sm:text-xs">
         <span
           class="size-2 shrink-0 rounded-full"
-          [class]="active() === t.key ? 'bg-current opacity-80' : t.dot"
+          [class]="t.dot"
           aria-hidden="true"
         ></span>
-        <span class="truncate">{{ t.label }}</span>
+        <span class="truncate sm:hidden">{{ t.short }}</span>
+        <span class="hidden truncate sm:inline">{{ t.label }}</span>
       </span>
       <span class="flex w-full items-baseline justify-between gap-2">
-        <span class="font-display text-2xl font-semibold tabular-nums leading-none sm:text-[1.75rem]">{{ t.count }}</span>
+        <span class="font-display text-2xl font-semibold tabular-nums leading-none transition-colors sm:text-[1.75rem]" [class]="active() === t.key ? t.text : 'text-fg'">{{ t.count }}</span>
         <span
           class="hidden truncate text-[11px] tabular-nums sm:inline"
           [class]="active() === t.key ? 'opacity-80' : 'text-fg-muted'"

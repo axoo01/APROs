@@ -1,11 +1,12 @@
 import { ChangeDetectionStrategy, Component, computed, input, model } from '@angular/core';
 import type { EodBucket } from '../../data-access/eod.facade';
 
-const TABS: readonly { key: EodBucket; label: string; short: string; active: string; dot: string }[] = [
-  { key: 'NOT_LOGGED', label: 'Not Logged', short: 'To log', active: 'bg-action text-on-action', dot: 'bg-accent' },
-  { key: 'ON_PACE', label: 'On Pace', short: 'On pace', active: 'bg-success text-on-status-p', dot: 'bg-success' },
-  { key: 'NEEDS_SUPPORT', label: 'Needs Support', short: 'Support', active: 'bg-status-l text-on-status-l', dot: 'bg-status-l' },
-  { key: 'BLOCKED', label: 'Blocked', short: 'Blocked', active: 'bg-danger text-on-status-a', dot: 'bg-danger' },
+/** `text` colours the active count; `tone` tints the lens glow. */
+const TABS: readonly { key: EodBucket; label: string; short: string; text: string; tone: string; dot: string }[] = [
+  { key: 'NOT_LOGGED', label: 'Not Logged', short: 'To log', text: 'text-accent', tone: 'var(--ap-accent)', dot: 'bg-accent' },
+  { key: 'ON_PACE', label: 'On Pace', short: 'On pace', text: 'text-success', tone: 'var(--ap-success)', dot: 'bg-success' },
+  { key: 'NEEDS_SUPPORT', label: 'Needs Support', short: 'Support', text: 'text-warning', tone: 'var(--ap-status-l)', dot: 'bg-status-l' },
+  { key: 'BLOCKED', label: 'Blocked', short: 'Blocked', text: 'text-danger', tone: 'var(--ap-danger)', dot: 'bg-danger' },
 ];
 
 /** EOD pulse counters as a WAI-ARIA tablist (roving tabindex, arrow keys). */
@@ -21,6 +22,10 @@ export class EodStatusTabsComponent {
   readonly active = model.required<EodBucket>();
 
   protected readonly tabs = computed(() => TABS.map((t) => ({ ...t, count: this.counts()[t.key] })));
+
+  protected readonly activeIndex = computed(() => TABS.findIndex((t) => t.key === this.active()));
+  protected readonly activeTone = computed(() => TABS.find((t) => t.key === this.active())?.tone ?? 'var(--ap-accent)');
+  protected readonly count = TABS.length;
 
   protected tabId(key: EodBucket): string {
     return `eod-tab-${key}`;

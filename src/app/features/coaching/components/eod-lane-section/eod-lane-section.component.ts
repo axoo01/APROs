@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output, linkedSignal } from '@angular/core';
 import type { Id } from '../../../../domain';
 import { IconComponent, type IconName } from '../../../../shared/components/icon/icon.component';
 import type { EodEntry } from '../../data-access/eod.facade';
@@ -18,10 +18,12 @@ export class EodLaneSectionComponent {
   readonly icon = input<IconName>('user-x');
   readonly entries = input.required<readonly EodEntry[]>();
   readonly disabled = input(false);
+  /** Starts expanded (e.g. when it's the only thing to act on); re-seeds when this flips. */
+  readonly startOpen = input(false);
   readonly details = output<Id>();
   readonly note = output<Id>();
 
   private static seq = 0;
-  protected readonly open = signal(false);
+  protected readonly open = linkedSignal(() => this.startOpen());
   protected readonly panelId = `eod-lane-${++EodLaneSectionComponent.seq}`;
 }

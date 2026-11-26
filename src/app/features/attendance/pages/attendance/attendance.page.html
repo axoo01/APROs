@@ -31,7 +31,7 @@
 
     <!-- Floating glass island: tabs + progress stay in reach while the list scrolls. -->
     <div
-      class="glass sticky top-[calc(4.5rem+env(safe-area-inset-top))] z-20 mt-4 overflow-hidden rounded-2xl border p-1.5 lg:top-[5.25rem]"
+      class="glass sticky top-[var(--shell-top)] z-20 mt-4 overflow-hidden rounded-2xl border p-1.5"
     >
       <ap-bucket-tabs
         [counts]="f.counts()"
@@ -109,7 +109,7 @@
               }
               <span class="tabular-nums text-fg-subtle/80">· {{ g.entries.length }}</span>
             </h3>
-            <ul class="mt-2.5 grid gap-2.5 sm:grid-cols-2 2xl:grid-cols-3">
+            <ul class="mt-2.5 grid grid-cols-2 gap-2 sm:gap-2.5 2xl:grid-cols-3">
               @for (e of g.entries; track e.id) {
                 <li
                   [attr.data-revealing]="e.revealing"
@@ -133,7 +133,7 @@
 
     @if (showCloseout()) {
       <div
-        class="sticky bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-20 mt-6 [animation:fade-up_240ms_var(--ease-out-quart)] lg:bottom-6"
+        class="sticky bottom-[var(--dock-clear)] z-20 mt-6 [animation:fade-up_240ms_var(--ease-out-quart)] lg:bottom-6"
       >
         <ap-closeout-bar
           [remaining]="f.remaining().length"

@@ -28,6 +28,7 @@ import { ApprenticeRepository } from '../../../data/ports/apprentice.repository'
 import { AttendanceRepository } from '../../../data/ports/attendance.repository';
 import type { SpecializationChip } from '../../../shared/components/roster-filter-bar/roster-filter-bar.component';
 import { ToastService } from '../../../shared/components/toast/toast.service';
+import { STATUS_TONE } from '../attendance-status.const';
 import { errorMessage } from '../../../shared/utils/error-message.util';
 import { streamFor } from '../../../shared/utils/stream-for.util';
 import { formatDayReport } from './day-report.util';
@@ -450,7 +451,9 @@ export class AttendanceFacade {
     const id = this.pushActivity({ label, status, changes });
     this.toasts.show({
       tone: status === 'P' || status === 'L' ? 'success' : 'info',
-      message: label,
+      message: changes.length === 1 ? (this.entry(first.apprenticeId)?.name ?? 'Apprentice') : `${changes.length} marked ${outcome}`,
+      badge: status ? { text: status, className: STATUS_TONE[status].solid } : { text: '–', className: 'bg-surface-2 text-fg-muted' },
+      group: 'sweep',
       action: { label: 'Undo', run: () => this.undo(id) },
     });
   }

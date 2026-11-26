@@ -26,6 +26,7 @@ import { AttendanceRepository } from '../../../data/ports/attendance.repository'
 import { EodRepository } from '../../../data/ports/eod.repository';
 import type { SpecializationChip } from '../../../shared/components/roster-filter-bar/roster-filter-bar.component';
 import { ToastService } from '../../../shared/components/toast/toast.service';
+import { EOD_SHORT, EOD_TONE } from '../eod-status.const';
 import { errorMessage } from '../../../shared/utils/error-message.util';
 import {
   coachFilterLabel,
@@ -414,9 +415,12 @@ export class EodFacade {
         : `${changes.length} marked ${outcome}`;
     const id = ++this.seq;
     this.activity.update((list) => [{ id, label, changes }, ...list].slice(0, UNDO_DEPTH));
+    const status = first.next?.status ?? null;
     this.toasts.show({
-      tone: first.next?.status === 'ON_PACE' ? 'success' : 'info',
-      message: label,
+      tone: status === 'ON_PACE' ? 'success' : 'info',
+      message: changes.length === 1 ? (this.entryById().get(first.apprenticeId)?.name ?? 'Apprentice') : `${changes.length} marked ${outcome}`,
+      badge: status ? { text: EOD_SHORT[status], className: EOD_TONE[status].solid } : { text: '–', className: 'bg-surface-2 text-fg-muted' },
+      group: 'eod',
       action: { label: 'Undo', run: () => this.undo(id) },
     });
   }

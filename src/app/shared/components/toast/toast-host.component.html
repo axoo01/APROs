@@ -1,24 +1,39 @@
 <div
-  class="pointer-events-none fixed inset-x-0 bottom-[calc(5.5rem+var(--ap-toast-inset)+env(safe-area-inset-bottom))] z-50 flex flex-col items-center gap-2 px-4 transition-[bottom] duration-200 lg:bottom-[calc(1.5rem+var(--ap-toast-inset))] lg:items-end lg:px-6"
+  class="pointer-events-none fixed inset-x-0 bottom-[calc(var(--dock-clear)+0.5rem+var(--ap-toast-inset))] z-50 flex flex-col items-center gap-2 px-4 transition-[bottom] duration-200 lg:bottom-[calc(1.5rem+var(--ap-toast-inset))] lg:items-end lg:px-6"
   [style.--ap-toast-inset.px]="toasts.bottomInset()"
   aria-live="polite"
   aria-atomic="false"
 >
   @for (t of toasts.toasts(); track t.id) {
+    <!-- Compact glass pill: badge/icon · message · action. Errors keep a dismiss button. -->
     <div
-      class="glass pointer-events-auto flex w-full max-w-sm items-center gap-3 rounded-2xl border px-4 py-3 text-sm shadow-[var(--shadow-float)] [animation:toast-in_220ms_var(--ease-spring)]"
+      class="glass pointer-events-auto flex max-w-[min(24rem,100%)] items-center gap-2 rounded-full border py-1 pl-1.5 text-[13px] font-medium shadow-[var(--shadow-float)] [animation:toast-in_220ms_var(--ease-spring)]"
+      [class]="t.action || t.tone === 'danger' ? 'pr-1' : 'pr-4'"
       role="status"
     >
-      <ap-icon [name]="icon(t)" [size]="18" [class]="tone(t)" />
-      <p class="min-w-0 flex-1 text-fg">{{ t.message }}</p>
+      @if (t.badge; as b) {
+        <span class="grid size-7 shrink-0 place-items-center rounded-full font-display text-xs font-semibold" [class]="b.className" aria-hidden="true">
+          {{ b.text }}
+        </span>
+      } @else {
+        <span class="grid size-7 shrink-0 place-items-center" aria-hidden="true">
+          <ap-icon [name]="icon(t)" [size]="16" [class]="tone(t)" />
+        </span>
+      }
+      <p class="min-w-0 flex-1 truncate text-fg">{{ t.message }}</p>
       @if (t.action; as action) {
-        <button type="button" class="btn btn-ghost min-h-9 px-3 text-accent" (click)="runAction(t)">
+        <button
+          type="button"
+          class="min-h-9 shrink-0 rounded-full px-3 text-[13px] font-semibold text-accent transition-colors hover:bg-surface-2"
+          (click)="runAction(t)"
+        >
           {{ action.label }}
         </button>
+      } @else if (t.tone === 'danger') {
+        <button type="button" class="grid size-9 shrink-0 place-items-center rounded-full text-fg-subtle hover:bg-surface-2" (click)="toasts.dismiss(t.id)" aria-label="Dismiss">
+          <ap-icon name="x" [size]="14" />
+        </button>
       }
-      <button type="button" class="btn btn-ghost min-h-9 px-2" (click)="toasts.dismiss(t.id)" aria-label="Dismiss">
-        <ap-icon name="x" [size]="16" />
-      </button>
     </div>
   }
 </div>

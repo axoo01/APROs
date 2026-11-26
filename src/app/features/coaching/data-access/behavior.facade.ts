@@ -37,6 +37,7 @@ import { AttendanceRepository } from '../../../data/ports/attendance.repository'
 import { BehaviorRepository } from '../../../data/ports/behavior.repository';
 import { EodRepository } from '../../../data/ports/eod.repository';
 import { ToastService } from '../../../shared/components/toast/toast.service';
+import { RATING_TONE } from '../../../shared/utils/behavior-rating.const';
 import { errorMessage } from '../../../shared/utils/error-message.util';
 import {
   coachFilterLabel,
@@ -247,7 +248,7 @@ export class BehaviorFacade {
     const e = this.entryById().get(apprenticeId);
     if (!e || (e.rating === rating && !customNote)) return;
     const note = customNote ?? (isStandardBehaviorNote(e.note) ? BEHAVIOR_DEFINITIONS[rating] : e.note);
-    this.apply([{ entry: e, next: { rating, note } }], `${e.name} → ${rating}`);
+    this.apply([{ entry: e, next: { rating, note } }], e.name);
   }
 
   saveNote(apprenticeId: Id, note: string): void {
@@ -284,6 +285,8 @@ export class BehaviorFacade {
       this.toasts.show({
         tone: 'success',
         message: label,
+        ...(changes[0]?.next ? { badge: { text: changes[0].next.rating, className: RATING_TONE[changes[0].next.rating].solid } } : {}),
+        group: 'behavior',
         action: { label: 'Undo', run: () => this.run(this.write(week.start, previous), () => undefined) },
       }),
     );

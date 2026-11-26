@@ -3,10 +3,14 @@ import { BUCKET_LABELS, type AttendanceBucket, type AttendanceSummary } from '..
 
 const ORDER: readonly AttendanceBucket[] = ['NOT_HERE_YET', 'PRESENT', 'ABSENT_EXCUSED'];
 
-const TONE: Record<AttendanceBucket, { active: string; dot: string }> = {
-  NOT_HERE_YET: { active: 'bg-action text-on-action', dot: 'bg-accent' },
-  PRESENT: { active: 'bg-status-p text-on-status-p', dot: 'bg-status-p' },
-  ABSENT_EXCUSED: { active: 'bg-status-a text-on-status-a', dot: 'bg-status-a' },
+/** Phone labels (three tabs share ~110px each). */
+const SHORT: Record<AttendanceBucket, string> = { NOT_HERE_YET: 'Not Here', PRESENT: 'Present', ABSENT_EXCUSED: 'Absent · Exc.' };
+
+/** `text` colours the active count; `tone` tints the lens glow. */
+const TONE: Record<AttendanceBucket, { text: string; tone: string; dot: string }> = {
+  NOT_HERE_YET: { text: 'text-accent', tone: 'var(--ap-accent)', dot: 'bg-accent' },
+  PRESENT: { text: 'text-status-p', tone: 'var(--ap-status-p)', dot: 'bg-status-p' },
+  ABSENT_EXCUSED: { text: 'text-status-a', tone: 'var(--ap-status-a)', dot: 'bg-status-a' },
 };
 
 /** The three Sweep buckets as a WAI-ARIA tablist with live counts (roving tabindex, arrow keys). */
@@ -30,8 +34,12 @@ export class BucketTabsComponent {
       PRESENT: `P ${s.P} · L ${s.L}`,
       ABSENT_EXCUSED: `A ${s.A} · E ${s.E}`,
     };
-    return ORDER.map((key) => ({ key, label: BUCKET_LABELS[key], count: c[key], hint: hints[key], ...TONE[key] }));
+    return ORDER.map((key) => ({ key, label: BUCKET_LABELS[key], short: SHORT[key], count: c[key], hint: hints[key], ...TONE[key] }));
   });
+
+  protected readonly activeIndex = computed(() => ORDER.indexOf(this.active()));
+  protected readonly activeTone = computed(() => TONE[this.active()].tone);
+  protected readonly count = ORDER.length;
 
   protected tabId(key: AttendanceBucket): string {
     return `bucket-tab-${key}`;
