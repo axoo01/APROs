@@ -1,6 +1,6 @@
 <section class="card flex h-full flex-col p-5" aria-labelledby="standouts-heading">
   <h2 id="standouts-heading" class="flex items-center gap-2 font-semibold">
-    <ap-icon name="trending-up" [size]="18" class="text-success" /> Top 5 Cohort Standouts
+    <ap-icon name="trending-up" [size]="18" class="text-success" /> Top 3 Cohort Standouts
   </h2>
   <p class="mt-1 text-xs text-fg-subtle">Ranked by composite readiness score</p>
 
@@ -49,4 +49,7 @@
       <li class="py-6 text-center text-sm text-fg-muted">No apprentices in scope.</li>
     }
   </ol>
+  <a class="btn btn-ghost mt-auto h-10 self-center px-4 text-xs" routerLink="/roster" [queryParams]="{ sort: 'vibe-desc' }">
+    View full ranking <ap-icon name="arrow-right" [size]="14" />
+  </a>
 </section>

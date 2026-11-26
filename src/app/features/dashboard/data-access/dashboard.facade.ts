@@ -26,7 +26,7 @@ import { SprintRepository } from '../../../data/ports/sprint.repository';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { errorMessage } from '../../../shared/utils/error-message.util';
 
-const STANDOUT_COUNT = 5;
+const STANDOUT_COUNT = 3;
 
 /** KPI card toggles: Health → thriving list · Attendance / EOD → rank worst first · Risk → every flag. */
 export type DashboardFocus = 'HEALTH' | 'ATTENDANCE' | 'EOD' | 'RISK';
@@ -41,6 +41,12 @@ export interface SpecializationHealth {
   readonly flagged: number;
   readonly averageScore: number;
   readonly atRisk: number;
+}
+
+/** Target of a "View all" link (router path + query params). */
+export interface ViewAllLink {
+  readonly path: string;
+  readonly query: Readonly<Record<string, string>> | null;
 }
 
 export interface BlockerCallout {
@@ -173,6 +179,24 @@ export class DashboardFacade {
         return list.filter((e) => e.health.tier !== 'THRIVING').sort(bySeverity);
       default:
         return list.filter((e) => e.health.tier === 'AT_RISK' || e.health.silentDrift).sort(bySeverity);
+    }
+  });
+
+  /** Where "View all" goes: health lists → Apprentices (filtered), attendance/EOD rankings → their logs. */
+  readonly radarViewAll = computed<ViewAllLink>(() => {
+    const spec = this.specFilter();
+    const apprentices = (view: string): ViewAllLink => ({ path: '/roster', query: spec ? { view, spec } : { view } });
+    switch (this.focus()) {
+      case 'HEALTH':
+        return apprentices('thriving');
+      case 'ATTENDANCE':
+        return { path: '/attendance/log', query: null };
+      case 'EOD':
+        return { path: '/coaching/eod/log', query: null };
+      case 'RISK':
+        return apprentices('flagged');
+      default:
+        return apprentices('risk');
     }
   });
 

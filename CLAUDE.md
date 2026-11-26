@@ -31,6 +31,8 @@ styles/tokens.css  Brand ramps + semantic roles (light/dark/.theme-dark)
 ```
 - `core/state/cohort-health.store.ts` (`CohortHealthStore`, page-provided, not root) = per-apprentice health + 360° passport +
   1-on-1 brief; Dashboard and Apprentices (`/roster`, nav label "Apprentices") build their views on it.
+  Dashboard previews the top 3 (radar, standouts); "View all" deep-links to Apprentices
+  (`/roster?view=risk|flagged|thriving&spec=<id>&sort=vibe-desc`) or, for attendance/EOD rankings, to their logs.
 - Components/facades inject **ports only** (`CohortRepository`, `AttendanceRepository`, …). Adapters are bound once in
   `data.providers.ts`. Spring Boot swap = add `adapters/http/*` + one provider branch. Nothing else changes.
 - Port contract: `watch*()` streams emit immediately + on change; commands are cold, single-emission, error with a `DomainError`.

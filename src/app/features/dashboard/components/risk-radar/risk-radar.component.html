@@ -19,18 +19,21 @@
   </div>
 
   @if (!focus() && blockers().length) {
-    <ul class="mt-4 flex flex-col gap-2" aria-label="Systemic blockers this week">
-      @for (b of blockers().slice(0, 3); track b.tag) {
-        <li class="flex items-start gap-2.5 rounded-xl bg-danger-soft px-3 py-2.5 text-sm text-danger">
-          <ap-icon name="users" [size]="16" class="mt-0.5 shrink-0" />
-          <span class="min-w-0">
-            <span class="font-semibold">Systemic blocker · {{ b.label }}</span>
-            <span class="opacity-90"> — {{ b.names.length }} apprentices this week</span>
-            <span class="block truncate text-xs opacity-80">{{ b.names.join(', ') }}</span>
-          </span>
-        </li>
+    <!-- One compact line: tags shared by 2+ apprentices this week (hover a chip for names). -->
+    <div class="mt-4 flex flex-wrap items-center gap-1.5 rounded-xl bg-danger-soft px-3 py-2" role="note" aria-label="Systemic blockers this week">
+      <span class="mr-1 inline-flex items-center gap-1.5 text-xs font-semibold text-danger">
+        <ap-icon name="users" [size]="14" /> Blockers this week
+      </span>
+      @for (b of blockers(); track b.tag) {
+        <span
+          class="inline-flex items-center gap-1 rounded-full bg-surface-solid/60 px-2 py-0.5 text-[11px] font-semibold text-danger ring-1 ring-inset ring-danger/25"
+          [title]="b.names.join(', ')"
+          [attr.aria-label]="b.label + ': ' + b.names.length + ' apprentices — ' + b.names.join(', ')"
+        >
+          {{ b.label }} <span class="tabular-nums opacity-80">{{ b.names.length }}</span>
+        </span>
       }
-    </ul>
+    </div>
   }
 
   <ul class="mt-3 divide-y divide-line">
@@ -93,9 +96,13 @@
     }
   </ul>
 
-  @if (hidden() > 0) {
-    <button type="button" class="btn btn-ghost mt-2 h-10 self-center px-4 text-xs" (click)="expanded.set(!expanded())">
-      {{ expanded() ? 'Show less' : 'Show all ' + entries().length }}
-    </button>
+  @if (hidden() > 0 && viewAll(); as link) {
+    <a
+      class="btn btn-ghost mt-auto h-10 self-center px-4 text-xs"
+      [routerLink]="link.path"
+      [queryParams]="link.query"
+    >
+      View all {{ entries().length }} <ap-icon name="arrow-right" [size]="14" />
+    </a>
   }
 </section>

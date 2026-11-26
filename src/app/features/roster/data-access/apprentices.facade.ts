@@ -22,6 +22,31 @@ const SEARCH_DEBOUNCE_MS = 150;
 /** Sortable directory columns (Track isn't sortable: the chips already filter by it). */
 export type ApprenticeSortKey = 'NAME' | 'COACH' | 'VIBE' | 'READINESS';
 export type SortDir = 'asc' | 'desc';
+/** Health views opened from the dashboard (`/roster?view=…`). */
+export type HealthView = 'risk' | 'flagged' | 'thriving';
+
+export const HEALTH_VIEW_LABELS: Readonly<Record<HealthView, string>> = {
+  risk: 'At Risk & Silent Drift',
+  flagged: 'All risk flags',
+  thriving: 'Thriving',
+};
+
+export function parseHealthView(value: string | null | undefined): HealthView | null {
+  return value === 'risk' || value === 'flagged' || value === 'thriving' ? value : null;
+}
+
+function inHealthView(e: ApprenticeHealth | null, view: HealthView): boolean {
+  if (!e) return false;
+  switch (view) {
+    case 'risk':
+      return e.health.tier === 'AT_RISK' || e.health.silentDrift;
+    case 'flagged':
+      return e.health.tier !== 'THRIVING';
+    case 'thriving':
+      return e.health.tier === 'THRIVING';
+  }
+}
+
 export interface ApprenticeSort {
   readonly key: ApprenticeSortKey;
   readonly dir: SortDir;
@@ -115,6 +140,12 @@ export class ApprenticesFacade {
 
   /** Click a header: same column flips asc ↔ desc, a new column starts ascending. */
   readonly sort = signal<ApprenticeSort>({ key: 'NAME', dir: 'asc' });
+  /** Set from the URL by the page; narrows the directory to one health group. */
+  readonly healthView = signal<HealthView | null>(null);
+  readonly healthViewLabel = computed(() => {
+    const v = this.healthView();
+    return v ? HEALTH_VIEW_LABELS[v] : null;
+  });
 
   sortBy(key: ApprenticeSortKey): void {
     this.sort.update((cur) => ({ key, dir: cur.key === key && cur.dir === 'asc' ? 'desc' : 'asc' }));
@@ -148,10 +179,12 @@ export class ApprenticesFacade {
     const q = this.search();
     const spec = this.specFilter();
     const { key, dir } = this.sort();
+    const view = this.healthView();
     const sign = dir === 'asc' ? 1 : -1;
     return this.allRows()
       .filter(
         (r) =>
+          (!view || inHealthView(r.health, view)) &&
           (!spec || r.apprentice.specializationId === spec) &&
           (!q || `${r.name} ${r.apprentice.email} ${r.coachName ?? ''}`.toLowerCase().includes(q)),
       )

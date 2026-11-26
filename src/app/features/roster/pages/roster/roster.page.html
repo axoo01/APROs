@@ -60,6 +60,17 @@
   }
 </div>
 
+@if (f.healthViewLabel(); as label) {
+  <div class="mb-3 flex flex-wrap items-center gap-2 text-sm" aria-live="polite">
+    <span class="text-fg-muted">Showing</span>
+    <button type="button" class="lens inline-flex min-h-9 items-center gap-2 rounded-full px-3 font-semibold" (click)="clearHealthView()" [attr.aria-label]="'Clear filter: ' + label">
+      {{ label }} <span class="tabular-nums opacity-70">{{ f.rows().length }}</span>
+      <ap-icon name="x" [size]="14" [strokeWidth]="2.5" />
+    </button>
+    <span class="text-xs text-fg-subtle">from the dashboard</span>
+  </div>
+}
+
 @if (!reportOpen()) {
   <!-- Desktop: fixed-layout table so every column lines up. -->
   <div class="card hidden overflow-hidden md:block">
@@ -106,7 +117,11 @@
                   <ap-avatar [name]="r.name" [src]="r.apprentice.avatarUrl" [size]="40" />
                   <span class="min-w-0 flex-1">
                     <span class="block truncate font-medium text-fg">{{ r.name }}</span>
-                    <span class="block truncate text-xs text-fg-subtle">{{ r.apprentice.email }}</span>
+                    @if (f.healthView() && r.health?.health?.reasons?.[0]; as reason) {
+                      <span class="block truncate text-xs font-medium" [class]="tierTone[r.health!.health.tier].text">{{ reason }}</span>
+                    } @else {
+                      <span class="block truncate text-xs text-fg-subtle">{{ r.apprentice.email }}</span>
+                    }
                   </span>
                 </button>
               } @else {
@@ -114,7 +129,11 @@
                   <ap-avatar [name]="r.name" [src]="r.apprentice.avatarUrl" [size]="40" />
                   <span class="min-w-0 flex-1">
                     <span class="block truncate font-medium text-fg">{{ r.name }}</span>
-                    <span class="block truncate text-xs text-fg-subtle">{{ r.apprentice.email }}</span>
+                    @if (f.healthView() && r.health?.health?.reasons?.[0]; as reason) {
+                      <span class="block truncate text-xs font-medium" [class]="tierTone[r.health!.health.tier].text">{{ reason }}</span>
+                    } @else {
+                      <span class="block truncate text-xs text-fg-subtle">{{ r.apprentice.email }}</span>
+                    }
                   </span>
                 </span>
               }
@@ -155,7 +174,11 @@
             <ap-avatar [name]="r.name" [src]="r.apprentice.avatarUrl" [size]="40" />
             <span class="min-w-0 flex-1">
               <span class="block truncate font-medium text-fg">{{ r.name }}</span>
-              <span class="block truncate text-xs text-fg-subtle">{{ r.specialization?.code ?? '—' }} · {{ r.coachName ?? 'Unassigned' }}</span>
+              @if (f.healthView() && r.health?.health?.reasons?.[0]; as reason) {
+                <span class="block truncate text-xs font-medium" [class]="tierTone[r.health!.health.tier].text">{{ reason }}</span>
+              } @else {
+                <span class="block truncate text-xs text-fg-subtle">{{ r.specialization?.code ?? '—' }} · {{ r.coachName ?? 'Unassigned' }}</span>
+              }
             </span>
           </span>
           <span class="flex items-center justify-between gap-2 pl-[3.25rem]">

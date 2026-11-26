@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { Router } from '@angular/router';
 import { CohortHealthStore } from '../../../../core/state/cohort-health.store';
 import { ApprenticePassportComponent } from '../../../../shared/components/apprentice-passport/apprentice-passport.component';
 import { AvatarComponent } from '../../../../shared/components/avatar/avatar.component';
@@ -8,7 +9,13 @@ import { colorTagVar } from '../../../../shared/utils/color-tag.util';
 import { ReadinessBannerComponent } from '../../components/readiness-banner/readiness-banner.component';
 import { VibeCheckComponent } from '../../components/vibe-check/vibe-check.component';
 import { ReadinessReportComponent } from '../../components/readiness-report/readiness-report.component';
-import { ApprenticesFacade, type ApprenticeRow, type ApprenticeSortKey } from '../../data-access/apprentices.facade';
+import { TIER_TONE } from '../../../../shared/utils/health-tier.const';
+import {
+  ApprenticesFacade,
+  parseHealthView,
+  type ApprenticeRow,
+  type ApprenticeSortKey,
+} from '../../data-access/apprentices.facade';
 
 interface Column {
   readonly label: string;
@@ -36,6 +43,34 @@ interface Column {
 })
 export class RosterPage {
   protected readonly f = inject(ApprenticesFacade);
+  private readonly router = inject(Router);
+  protected readonly tierTone = TIER_TONE;
+
+  /** Query params (withComponentInputBinding): `view` (risk | flagged | thriving), `spec` (track id), `sort` (vibe-desc …). */
+  readonly view = input<string>();
+  readonly spec = input<string>();
+  readonly sort = input<string>();
+
+  constructor() {
+    // URL → filters. Re-applied whenever the query string changes (e.g. clearing the chip, back/forward).
+    effect(() => {
+      const view = parseHealthView(this.view());
+      const spec = this.spec() ?? null;
+      const sort = this.sort();
+      untracked(() => {
+        this.f.healthView.set(view);
+        if (spec) this.f.specFilter.set(spec);
+        const [key, dir] = (sort ?? '').split('-');
+        const keys: Record<string, ApprenticeSortKey> = { name: 'NAME', coach: 'COACH', vibe: 'VIBE', readiness: 'READINESS' };
+        if (key && keys[key]) this.f.sort.set({ key: keys[key], dir: dir === 'desc' ? 'desc' : 'asc' });
+        else if (view) this.f.sort.set({ key: 'VIBE', dir: view === 'thriving' ? 'desc' : 'asc' });
+      });
+    });
+  }
+
+  protected clearHealthView(): void {
+    void this.router.navigate([], { queryParams: { view: null }, queryParamsHandling: 'merge', replaceUrl: true });
+  }
   protected readonly reportOpen = signal(false);
 
   protected readonly tag = colorTagVar;
