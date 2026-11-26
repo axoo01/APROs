@@ -8,7 +8,7 @@ import { APP_CONFIG } from '../../../../core/config/app-config.token';
 import { ReferenceDataStore } from '../../../../core/state/reference-data.store';
 import { DEMO_PERSONAS, type DemoPersona } from '../../../../data/seed/personas.const';
 import { AvatarComponent } from '../../../../shared/components/avatar/avatar.component';
-import { IconComponent } from '../../../../shared/components/icon/icon.component';
+import { IconComponent, type IconName } from '../../../../shared/components/icon/icon.component';
 import { LogoComponent } from '../../../../shared/components/logo/logo.component';
 import { errorMessage } from '../../../../shared/utils/error-message.util';
 
@@ -29,6 +29,12 @@ export class LoginPage {
 
   /** Bound from the query string via withComponentInputBinding(). */
   readonly returnUrl = input<string | undefined>();
+
+  protected readonly highlights: readonly { icon: IconName; label: string }[] = [
+    { icon: 'calendar-check', label: 'Instant check-ins' },
+    { icon: 'gauge', label: 'Daily coaching' },
+    { icon: 'dashboard', label: 'Cohort health' },
+  ];
 
   protected readonly pending = signal<Pending>(null);
   protected readonly error = signal<string | null>(null);

@@ -1,19 +1,13 @@
 <!--
-  Always-on brand scene: `.theme-dark` forces dark tokens here regardless of the user's theme,
-  so the frosted card, fields and buttons read correctly on navy in both light and dark mode.
+  Always-on brand scene: `.theme-dark` forces dark tokens here regardless of the user's theme.
+  Same material language as the app: static ambient backdrop (no blur filters), glass panel, lens hover.
 -->
-<div class="theme-dark relative isolate min-h-dvh overflow-hidden bg-primary-700 text-fg">
-  <!-- Ambient light: gives the glass card something to refract -->
-  <div class="pointer-events-none absolute inset-0 -z-10" aria-hidden="true">
-    <div class="absolute -left-40 -top-40 size-[34rem] rounded-full bg-orange-500/25 blur-[120px]"></div>
-    <div class="absolute -bottom-48 right-[-10rem] size-[38rem] rounded-full bg-light-blue-500/20 blur-[130px]"></div>
-    <div class="absolute left-1/2 top-1/3 size-[26rem] rounded-full bg-ultramarine-400/15 blur-[120px]"></div>
-    <!-- The logo's three bars, enlarged, sitting behind the card -->
-    <div class="absolute right-[6%] top-1/2 hidden -translate-y-1/2 flex-col gap-8 lg:flex">
-      <span class="h-10 w-[28rem] rounded-full bg-white/[0.06]"></span>
-      <span class="h-10 w-[28rem] rounded-full bg-orange-500/60"></span>
-      <span class="h-10 w-[28rem] rounded-full bg-white/[0.06]"></span>
-    </div>
+<div class="login-scene theme-dark relative isolate min-h-dvh overflow-hidden text-fg">
+  <!-- The logo's three bars, enlarged, as glass rails behind the card (static) -->
+  <div class="pointer-events-none absolute right-[5%] top-1/2 -z-10 hidden -translate-y-1/2 flex-col gap-7 lg:flex" aria-hidden="true">
+    <span class="rail h-11 w-[30rem] rounded-full"></span>
+    <span class="rail rail-accent h-11 w-[30rem] rounded-full"></span>
+    <span class="rail h-11 w-[30rem] rounded-full"></span>
   </div>
 
   <div
@@ -25,81 +19,71 @@
 
       <div class="mt-10 max-w-xl lg:my-auto">
         <p class="text-xs font-semibold uppercase tracking-[0.2em] text-orange-300">APROs</p>
-        <h1 class="mt-3 text-[2rem] font-semibold leading-[1.1] sm:text-5xl lg:text-[3.5rem]">
+        <h1 class="mt-3 text-[2rem] font-semibold leading-[1.08] tracking-tight sm:text-5xl lg:text-[3.5rem]">
           Apprenticeship operations, <span class="text-orange-400">unified.</span>
         </h1>
         <p class="mt-5 max-w-md text-base leading-relaxed text-primary-100 lg:text-lg">
           Streamlined daily workflows for coaches and live program health and insights.
         </p>
 
-        <ul class="mt-8 flex flex-wrap gap-3" aria-label="Highlights">
-          <li class="glass inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium text-white">
-            <ap-icon name="calendar-check" [size]="16" class="text-orange-400" /> Instant check-ins
-          </li>
-          <li class="glass inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium text-white">
-            <ap-icon name="dashboard" [size]="16" class="text-orange-400" /> Cohort health
-          </li>
+        <ul class="mt-8 flex flex-wrap gap-2.5" aria-label="Highlights">
+          @for (h of highlights; track h.label) {
+            <li class="glass-panel inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-white">
+              <ap-icon [name]="h.icon" [size]="16" class="text-orange-400" /> {{ h.label }}
+            </li>
+          }
         </ul>
       </div>
     </section>
 
-    <!-- Frosted sign-in card -->
+    <!-- Sign-in card -->
     <main class="w-full lg:justify-self-end">
-      <div
-        class="glass-strong w-full rounded-3xl p-6 sm:p-8 lg:max-w-[28rem] [animation:fade-up_480ms_var(--ease-out-quart)]"
-      >
-        <h2 class="text-2xl font-semibold text-white">Welcome back</h2>
-        <p class="mt-1 text-sm text-fg-muted">
-          @if (config.demoMode) {
-            Pick a demo persona to jump straight in.
-          } @else {
-            Sign in with your work email.
-          }
-        </p>
+      <div class="glass-panel login-card w-full rounded-[2rem] p-6 sm:p-8 lg:max-w-[27rem] [animation:fade-up_480ms_var(--ease-out-quart)]">
+        <h2 class="text-2xl font-semibold tracking-tight text-white">Welcome back</h2>
+        <p class="mt-1 text-sm text-fg-muted">{{ config.demoMode ? 'Choose a profile to continue.' : 'Sign in with your work email.' }}</p>
 
         @if (config.demoMode) {
-          <ul class="mt-6 space-y-3" aria-label="Demo personas">
+          <ul class="mt-6 grid grid-cols-2 gap-3" aria-label="Demo profiles">
             @for (p of personas(); track p.role) {
               <li>
                 <button
                   type="button"
-                  class="glass-tile group flex w-full items-center gap-4 rounded-2xl p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-orange-400/60 hover:bg-white/[0.09] disabled:pointer-events-none disabled:opacity-60"
+                  class="persona group relative flex h-full w-full flex-col items-center gap-2.5 rounded-2xl px-3 pb-4 pt-5 text-center disabled:pointer-events-none disabled:opacity-60"
                   [disabled]="pending() !== null"
                   [attr.aria-busy]="pending() === p.role"
+                  [attr.aria-label]="'Continue as ' + (p.user?.fullName ?? p.label) + ', ' + p.label"
                   (click)="signInAs(p)"
                 >
-                  <ap-avatar [name]="p.user?.fullName ?? p.label" [size]="46" />
-                  <span class="min-w-0 flex-1">
-                    <span class="flex items-center gap-2">
-                      <span class="font-display text-base font-semibold text-white">{{ p.label }}</span>
-                      <span
-                        class="rounded-full px-2 py-0.5 text-[11px] font-semibold"
-                        [class]="p.role === 'ADMIN' ? 'bg-accent-soft text-accent' : 'bg-info-soft text-info'"
-                      >
-                        {{ p.role === 'ADMIN' ? 'Admin' : 'Coach' }}
-                      </span>
-                    </span>
-                    <span class="mt-0.5 block text-sm text-fg-muted">{{ p.user?.fullName }}</span>
-                    <span class="mt-1 block text-xs leading-relaxed text-fg-subtle">{{ p.blurb }}</span>
+                  <span class="relative">
+                    <ap-avatar [name]="p.user?.fullName ?? p.label" [size]="52" />
+                    @if (pending() === p.role) {
+                      <span class="absolute inset-0 animate-spin rounded-full border-2 border-white/15 border-t-orange-400" aria-hidden="true"></span>
+                    }
                   </span>
-                  @if (pending() === p.role) {
-                    <span class="size-5 animate-spin rounded-full border-2 border-white/20 border-t-orange-400" aria-label="Signing in"></span>
-                  } @else {
-                    <ap-icon name="arrow-right" [size]="20" class="text-fg-subtle transition-transform group-hover:translate-x-1 group-hover:text-orange-400" />
-                  }
+                  <span class="min-w-0">
+                    <span class="block truncate text-[0.9375rem] font-semibold text-white">{{ p.user?.fullName ?? p.label }}</span>
+                    <span class="mt-0.5 block text-[11px] font-semibold uppercase tracking-[0.12em]" [class]="p.role === 'ADMIN' ? 'text-orange-300' : 'text-light-blue-300'">
+                      {{ p.label }}
+                    </span>
+                  </span>
+                  <ap-icon
+                    name="arrow-right"
+                    [size]="16"
+                    class="absolute right-3 top-3 text-fg-subtle opacity-0 transition-[opacity,transform] duration-200 group-hover:translate-x-0.5 group-hover:opacity-100 group-focus-visible:opacity-100"
+                  />
                 </button>
               </li>
             }
           </ul>
 
-          <div class="my-6 flex items-center gap-3 text-xs font-medium uppercase tracking-wider text-fg-subtle">
-            <span class="h-px flex-1 bg-white/10"></span> or use email <span class="h-px flex-1 bg-white/10"></span>
+          <div class="my-6 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-fg-subtle">
+            <span class="h-px flex-1 bg-white/10"></span> or <span class="h-px flex-1 bg-white/10"></span>
           </div>
         }
 
         <form [formGroup]="form" (ngSubmit)="signInWithEmail()" novalidate class="space-y-3">
           <div>
-            <label for="email" class="mb-1.5 block text-sm font-medium text-white">Work email</label>
+            <label for="email" class="sr-only">Work email</label>
             <div class="relative">
               <ap-icon name="mail" [size]="18" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-fg-subtle" />
               <input
@@ -108,26 +92,22 @@
                 formControlName="email"
                 autocomplete="email"
                 inputmode="email"
-                placeholder="name@apros.demo"
-                class="field border-white/10 pl-11"
+                placeholder="Work email"
+                class="field rounded-2xl border-white/10 pl-11"
                 [attr.aria-invalid]="form.controls.email.touched && form.controls.email.invalid"
-                aria-describedby="email-hint"
+                [attr.aria-describedby]="form.controls.email.touched && form.controls.email.invalid ? 'email-error' : null"
               />
             </div>
-            <p id="email-hint" class="mt-1.5 text-xs text-fg-subtle">
-              @if (form.controls.email.touched && form.controls.email.invalid) {
-                <span class="text-danger">Enter a valid email address.</span>
-              } @else if (config.demoMode) {
-                Any seeded staff email works, e.g. jamillah&#64;apros.demo
-              }
-            </p>
+            @if (form.controls.email.touched && form.controls.email.invalid) {
+              <p id="email-error" class="mt-1.5 text-xs text-danger">Enter a valid email address.</p>
+            }
           </div>
-          <button type="submit" class="btn btn-primary w-full" [disabled]="pending() !== null">
+          <button type="submit" class="btn btn-primary min-h-12 w-full rounded-2xl" [disabled]="pending() !== null">
             @if (pending() === 'email') {
               <span class="size-4 animate-spin rounded-full border-2 border-primary-900/30 border-t-primary-900" aria-hidden="true"></span>
               Signing in…
             } @else {
-              Continue
+              Continue <ap-icon name="arrow-right" [size]="16" />
             }
           </button>
         </form>
@@ -135,13 +115,6 @@
         @if (error(); as message) {
           <p class="mt-4 flex items-start gap-2 rounded-xl bg-danger-soft px-3 py-2.5 text-sm text-danger" role="alert">
             <ap-icon name="alert" [size]="16" class="mt-0.5" /> {{ message }}
-          </p>
-        }
-
-        @if (config.demoMode) {
-          <p class="mt-6 flex items-start gap-2 text-xs leading-relaxed text-fg-subtle">
-            <ap-icon name="shield" [size]="14" class="mt-0.5 shrink-0" />
-            Demo mode — no passwords, and all data stays in this browser. You can reset it anytime.
           </p>
         }
       </div>
