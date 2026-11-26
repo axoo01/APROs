@@ -10,7 +10,7 @@ import { NavigationStore } from '../navigation/navigation.store';
   imports: [RouterLink, RouterLinkActive, IconComponent, LogoComponent],
   templateUrl: './side-nav.component.html',
   styleUrl: './side-nav.component.css',
-  host: { class: 'sticky top-0 h-dvh flex-col bg-brand-panel' },
+  host: { class: 'sticky top-0 h-dvh flex-col p-3 pr-0' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SideNavComponent {

@@ -18,7 +18,7 @@
 
 <ap-health-kpis [kpis]="f.kpis()" [active]="f.focus()" (kpiToggle)="f.toggleFocus($event)" />
 
-<div class="mt-6 grid gap-6 lg:grid-cols-5">
+<div class="mt-8 grid gap-6 lg:grid-cols-5 lg:gap-7">
   <div class="lg:col-span-3">
     <ap-risk-radar
       [entries]="f.radar()"
@@ -34,7 +34,7 @@
   </div>
 </div>
 
-<div class="mt-8">
+<div class="mt-10">
   <ap-spec-health-matrix [rows]="f.specMatrix()" [active]="f.specFilter()" (specToggle)="f.toggleSpec($event)" />
 </div>
 

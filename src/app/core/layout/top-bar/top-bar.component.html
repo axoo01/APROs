@@ -1,6 +1,7 @@
-<!-- Frosted layer is a sibling, not an ancestor, so menus/sheets can blur the page and use position:fixed. -->
-<div class="glass absolute inset-0 -z-10 border-b" aria-hidden="true"></div>
-<div class="mx-auto flex h-16 max-w-7xl items-center gap-2 px-3 sm:px-6 lg:h-[4.5rem] lg:px-8">
+<div class="relative isolate mx-auto max-w-7xl">
+<!-- Frosted capsule is a sibling, not an ancestor, so menus/sheets can blur the page and use position:fixed. -->
+<div class="glass absolute inset-0 -z-10 rounded-2xl border" aria-hidden="true"></div>
+<div class="flex h-16 items-center gap-2 px-3 sm:px-4 lg:h-[4.5rem] lg:px-5">
   <span class="grid size-9 shrink-0 place-items-center rounded-xl bg-primary-500 lg:hidden" aria-hidden="true">
     <ap-logo variant="mark" [size]="16" />
   </span>
@@ -24,3 +25,4 @@
     <span class="text-xs text-fg-subtle">{{ clock.today() | date: 'EEE, d MMM' }}</span>
   </div>
 }
+</div>

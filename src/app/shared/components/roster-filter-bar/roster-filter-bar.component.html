@@ -41,15 +41,15 @@
       <div
         role="radiogroup"
         aria-label="Coach scope"
-        class="flex shrink-0 rounded-xl border border-line bg-surface-2/60 p-1"
+        class="flex shrink-0 gap-0.5 rounded-xl border border-line bg-surface-2 p-1"
       >
         <button
           type="button"
           role="radio"
           [attr.aria-checked]="coach() === 'ALL'"
-          class="min-h-9 rounded-lg px-3 text-sm font-medium transition-colors"
+          class="min-h-9 rounded-lg px-3 text-sm font-medium transition-[color,background-color,box-shadow] duration-200"
           [class]="
-            coach() === 'ALL' ? 'bg-surface text-fg shadow-sm' : 'text-fg-muted hover:text-fg'
+            coach() === 'ALL' ? 'lens text-fg' : 'text-fg-muted hover:text-fg'
           "
           (click)="coach.set('ALL')"
         >
@@ -60,9 +60,9 @@
             type="button"
             role="radio"
             [attr.aria-checked]="coach() === 'MINE'"
-            class="min-h-9 rounded-lg px-3 text-sm font-medium transition-colors"
+            class="min-h-9 rounded-lg px-3 text-sm font-medium transition-[color,background-color,box-shadow] duration-200"
             [class]="
-              coach() === 'MINE' ? 'bg-surface text-fg shadow-sm' : 'text-fg-muted hover:text-fg'
+              coach() === 'MINE' ? 'lens text-fg' : 'text-fg-muted hover:text-fg'
             "
             (click)="coach.set('MINE')"
           >

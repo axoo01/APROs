@@ -12,7 +12,7 @@ import { UserMenuComponent } from '../user-menu/user-menu.component';
   imports: [DatePipe, LogoComponent, PhasePillComponent, CohortSwitcherComponent, UserMenuComponent],
   templateUrl: './top-bar.component.html',
   styleUrl: './top-bar.component.css',
-  host: { class: 'sticky top-0 z-40 isolate block pt-safe' },
+  host: { class: 'sticky top-0 z-40 block px-3 pt-[calc(0.75rem+env(safe-area-inset-top))] sm:px-4 lg:px-8' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TopBarComponent {

@@ -168,20 +168,32 @@
 /* ---------- Layer 2: semantic roles ---------- */
 :root {
   color-scheme: light;
-  --ap-canvas: color-mix(in oklab, var(--color-primary-50) 38%, var(--color-white));
-  --ap-surface: var(--color-white);
-  --ap-surface-2: var(--color-gray-100);
-  --ap-glass: rgb(255 255 255 / 0.58);
+  --ap-canvas: #f4f6f8;
+  /* Liquid glass: surfaces are translucent panels over a static ambient backdrop (no blur needed on a smooth
+     gradient — it looks identical and costs nothing). Real blur is reserved for floating layers (`glass`). */
+  --ap-surface: rgb(255 255 255 / 0.66);
+  --ap-surface-solid: var(--color-white);
+  --ap-surface-2: rgb(8 40 59 / 0.05);
+  --ap-panel-line: rgb(255 255 255 / 0.85);
+  --ap-panel-edge: rgb(8 40 59 / 0.07);
+  --ap-panel-highlight: rgb(255 255 255 / 0.95);
+  --ap-panel-shadow: 0 1px 2px rgb(8 40 59 / 0.05), 0 12px 32px -14px rgb(8 40 59 / 0.2);
+  --ap-panel-sheen: linear-gradient(180deg, rgb(255 255 255 / 0.55), rgb(255 255 255 / 0) 42%);
+  --ap-lens-base: rgb(255 255 255 / 0.9);
+  --ap-glass-thick: rgb(255 255 255 / 0.78);
+  --ap-glass: rgb(255 255 255 / 0.62);
   --ap-glass-strong: rgb(255 255 255 / 0.7);
   --ap-glass-line: rgb(255 255 255 / 0.65);
   --ap-glass-highlight: rgb(255 255 255 / 0.7);
   --ap-glass-shadow: 0 1px 1px rgb(8 40 59 / 0.04), 0 12px 32px -12px rgb(8 40 59 / 0.22);
-  /* Soft brand light behind the app so frosted layers have something to refract. */
+  /* Static ambient light behind the app (painted once on a fixed layer — never animated). */
   --ap-ambient:
-    radial-gradient(60rem 40rem at 100% -10%, rgb(255 90 0 / 0.07), transparent 60%),
-    radial-gradient(50rem 40rem at -10% 110%, rgb(93 175 246 / 0.1), transparent 60%);
-  --ap-field-bg: var(--ap-surface);
-  --ap-line: var(--color-gray-300);
+    radial-gradient(52rem 36rem at 92% -8%, rgb(255 90 0 / 0.13), transparent 62%),
+    radial-gradient(46rem 40rem at -6% 104%, rgb(93 175 246 / 0.18), transparent 60%),
+    radial-gradient(40rem 30rem at 48% 46%, rgb(140 120 255 / 0.06), transparent 70%),
+    linear-gradient(180deg, #f7f8fa, #eef2f6);
+  --ap-field-bg: rgb(255 255 255 / 0.72);
+  --ap-line: rgb(8 40 59 / 0.12);
   --ap-line-strong: var(--color-gray-500);
   --ap-fg: #101828;
   --ap-fg-muted: var(--color-gray-700);
@@ -229,19 +241,29 @@
 :root.dark,
 .theme-dark {
   color-scheme: dark;
-  --ap-canvas: var(--color-primary-900);
-  --ap-surface: var(--color-primary-700);
-  --ap-surface-2: var(--color-primary-600);
-  --ap-glass: rgb(6 28 42 / 0.55);
+  --ap-canvas: #041723;
+  --ap-surface: rgb(255 255 255 / 0.05);
+  --ap-surface-solid: #0a2536;
+  --ap-surface-2: rgb(255 255 255 / 0.07);
+  --ap-panel-line: rgb(255 255 255 / 0.09);
+  --ap-panel-edge: rgb(0 0 0 / 0.25);
+  --ap-panel-highlight: rgb(255 255 255 / 0.1);
+  --ap-panel-shadow: 0 1px 1px rgb(0 0 0 / 0.25), 0 24px 44px -24px rgb(0 0 0 / 0.7);
+  --ap-panel-sheen: linear-gradient(180deg, rgb(255 255 255 / 0.05), rgb(255 255 255 / 0) 40%);
+  --ap-lens-base: rgb(255 255 255 / 0.1);
+  --ap-glass-thick: rgb(8 32 47 / 0.78);
+  --ap-glass: rgb(8 32 47 / 0.6);
   --ap-glass-strong: rgb(8 40 59 / 0.42);
   --ap-glass-line: rgb(255 255 255 / 0.12);
   --ap-glass-highlight: rgb(255 255 255 / 0.1);
   --ap-glass-shadow: 0 1px 1px rgb(0 0 0 / 0.2), 0 24px 48px -16px rgb(0 0 0 / 0.55);
   --ap-ambient:
-    radial-gradient(60rem 40rem at 100% -10%, rgb(255 90 0 / 0.1), transparent 60%),
-    radial-gradient(50rem 40rem at -10% 110%, rgb(93 175 246 / 0.08), transparent 60%);
+    radial-gradient(52rem 36rem at 92% -8%, rgb(255 90 0 / 0.16), transparent 62%),
+    radial-gradient(46rem 40rem at -6% 104%, rgb(30 160 170 / 0.16), transparent 60%),
+    radial-gradient(40rem 32rem at 46% 50%, rgb(93 175 246 / 0.07), transparent 70%),
+    linear-gradient(180deg, #06202f, #031119);
   --ap-field-bg: rgb(255 255 255 / 0.05);
-  --ap-line: rgb(141 156 165 / 0.22);
+  --ap-line: rgb(255 255 255 / 0.1);
   --ap-line-strong: var(--color-primary-300);
   --ap-fg: #eef2f4;
   --ap-fg-muted: var(--color-primary-100);
@@ -284,6 +306,7 @@
   --color-canvas: var(--ap-canvas);
   --color-surface: var(--ap-surface);
   --color-surface-2: var(--ap-surface-2);
+  --color-surface-solid: var(--ap-surface-solid);
   --color-glass: var(--ap-glass);
   --color-glass-line: var(--ap-glass-line);
   --color-line: var(--ap-line);

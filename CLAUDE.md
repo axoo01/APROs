@@ -96,10 +96,17 @@ styles/tokens.css  Brand ramps + semantic roles (light/dark/.theme-dark)
 
 ## Design system (AmaliTech "Unified Experience Design" Figma)
 - Brand: navy `primary-500 #08283B`, orange `orange-500 #FF5A00`; headings Poppins, body Inter; radius-xl 12px.
-- Use semantic utilities (`bg-surface`, `text-fg-muted`, `bg-status-p-soft`, `btn btn-primary`, `card`, `field`, `glass`, `sheet`). No raw hex in components.
+- Use semantic utilities (`bg-surface`, `text-fg-muted`, `bg-status-p-soft`, `btn btn-primary`, `card`, `field`, `glass`, `glass-panel`, `lens`, `chip`, `sheet`). No raw hex in components.
 - Modals = native `<dialog class="sheet">` (bottom sheet on phones, centered from `sm`); detail panels = `<dialog class="slide-over">` (right-hand, full width on phones). Status colours per P/L/A/E: `features/attendance/attendance-status.const.ts`.
-- Glass: `glass` (floating layers), `glass-strong` (hero panels, e.g. login card), `glass-tile` (translucent content inside a glass
-  panel, no blur). Never nest backdrop-filters or put one on an *ancestor* of menus/sheets (breaks child blur and `position: fixed`).
+- **Liquid glass, speed first.** Static ambient backdrop (`--ap-ambient` on a fixed `body::before`, painted once, never animated).
+  `bg-surface`/`card`/`glass-panel` = translucent panel + specular top edge, **no blur** (blur over a smooth static gradient is
+  invisible and costly). Real blur (`glass`) only where content scrolls underneath: top-bar capsule, mobile dock, sticky
+  islands/toolbars, closeout capsule, menus, toasts; dialogs (`sheet`, `slide-over`) use `--ap-glass-thick`. `glass-tile` = content
+  inside a panel. `lens` (+ `--lens-tone`) = selected item of a segmented control/tab set; `chip`, `spec-glow` (`--tone`), `lift`.
+  **Sticky/overlaid elements use `bg-surface-solid`** (translucent surfaces would show scrolled content). Sticky offsets use
+  `--shell-top` / `--dock-clear`. Never nest backdrop-filters or put one on an *ancestor* of menus/sheets.
+- Route transitions: only `<main>` (`view-transition-name: page`) cross-fades; the active nav pill (`nav-pill` / `dock-pill`) glides.
+  `prefers-reduced-transparency` and missing backdrop-filter support fall back to solid surfaces.
 - Avatars are one monochrome frosted badge (`--ap-avatar-*` tokens) — never coloured, so they can't clash with status/rating/specialization colours.
 - `.theme-dark` forces dark tokens on a subtree (login brand scene) regardless of the user's theme.
 - Don't put display utilities on a component host that callers may need to hide — wrap instead.

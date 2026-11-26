@@ -1,0 +1,9 @@
+/* Active dock item: liquid lens that glides between items on navigation. */
+.is-active .dock-pill {
+  view-transition-name: dock-pill;
+  background-color: color-mix(in oklab, var(--ap-accent) 14%, var(--ap-lens-base));
+  box-shadow:
+    inset 0 1px 0 0 var(--ap-panel-highlight),
+    0 0 0 1px color-mix(in oklab, var(--ap-accent) 35%, transparent),
+    0 6px 16px -8px color-mix(in oklab, var(--ap-accent) 70%, transparent);
+}

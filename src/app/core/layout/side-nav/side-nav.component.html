@@ -1,3 +1,4 @@
+<div class="side-panel flex h-full w-full flex-col overflow-hidden rounded-[1.75rem]">
 <div class="flex h-20 items-center gap-3 px-6">
   <ap-logo [size]="17" class="text-white" />
 </div>
@@ -13,12 +14,12 @@
           [routerLink]="item.path"
           routerLinkActive="is-active"
           ariaCurrentWhenActive="page"
-          class="group relative flex h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium text-primary-100 transition-colors hover:bg-white/5 hover:text-white [&.is-active]:bg-white/10 [&.is-active]:text-white"
+          class="group relative isolate flex h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium text-primary-100 transition-colors hover:bg-white/5 hover:text-white [&.is-active]:text-white"
         >
-          <span
-            class="absolute inset-y-2 left-0 w-1 scale-y-0 rounded-full bg-orange-500 transition-transform duration-200 group-[.is-active]:scale-y-100"
-            aria-hidden="true"
-          ></span>
+          <!-- Liquid pill: glides to the new item on navigation (view-transition-name set only while active). -->
+          <span class="nav-pill absolute inset-0 -z-10 rounded-xl opacity-0 group-[.is-active]:opacity-100" aria-hidden="true">
+            <span class="absolute inset-y-2.5 left-0 w-1 rounded-full bg-orange-500 shadow-[0_0_12px_rgb(255_90_0/0.8)]"></span>
+          </span>
           <ap-icon [name]="item.icon" [size]="19" />
           {{ item.label }}
         </a>
@@ -35,3 +36,4 @@
     <p class="mt-1 leading-relaxed">Data lives in this browser. Reset anytime from your profile menu.</p>
   </div>
 }
+</div>
