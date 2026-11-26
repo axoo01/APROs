@@ -125,15 +125,15 @@ describe('createSeedDb', () => {
     expect(behind.length).toBeGreaterThanOrEqual(2);
   });
 
-  it('seeds weekly behavior for prior weeks and only part of the current week', () => {
+  it('seeds weekly behavior for completed weeks only — the current week stays unrated', () => {
     const wednesday = createSeedDb(new Date(2026, 10, 25, 10, 0, 0));
     const c4 = selectAll(wednesday.cohorts).find((c) => c.code === '26-11-04')!;
     const ratings = selectAll(wednesday.weeklyBehavior).filter((r) => r.cohortId === c4.id);
     const byWeek = new Map<string, number>();
     for (const r of ratings) byWeek.set(r.weekStart, (byWeek.get(r.weekStart) ?? 0) + 1);
-    expect([...byWeek.keys()].sort()).toEqual(['2026-11-02', '2026-11-09', '2026-11-16', '2026-11-23']);
+    expect([...byWeek.keys()].sort()).toEqual(['2026-11-02', '2026-11-09', '2026-11-16']);
     expect(byWeek.get('2026-11-16')).toBe(30);
-    expect(byWeek.get('2026-11-23')).toBeLessThan(30);
+    expect(byWeek.has('2026-11-23')).toBe(false);
     expect(new Set(ratings.map((r) => r.rating)).size).toBeGreaterThanOrEqual(4);
   });
 

@@ -24,7 +24,7 @@ describe('DemoAuthService', () => {
   it('signs in as a persona and exposes role + actor', async () => {
     const auth = TestBed.inject(AuthService);
     const session = await firstValueFrom(auth.loginAsPersona('ADMIN'));
-    expect(session).toMatchObject({ role: 'ADMIN', fullName: 'Abena Owusu-Ansah' });
+    expect(session).toMatchObject({ role: 'ADMIN', fullName: 'Bob Karemera' });
     expect(auth.isAuthenticated()).toBe(true);
     expect(auth.actor()).toEqual({ userId: session.userId, role: 'ADMIN' });
   });

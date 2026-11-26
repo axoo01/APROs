@@ -120,5 +120,6 @@ styles/tokens.css  Brand ramps + semantic roles (light/dark/.theme-dark)
 - Seed data is deterministic (`Prng`) — keep it stable across resets. Live cohort (`26-11-04`) = last 20 working days
   before today (clamped to its start), real 30-person roster (`LIVE_ROSTER`, 5 coaches) + planted absence streaks and
   late runs ending yesterday, starting with the coach persona's (Axcel) group. Planted EOD behind streaks go to high-attendance
-  apprentices (Blocked days tagged `ENVIRONMENT`) with a dipped current-week rating → Silent Drift + a systemic blocker.
+  apprentices (Blocked days tagged `ENVIRONMENT`) with a dipped last-week rating → Silent Drift + a systemic blocker.
+  Attendance/EOD history runs to yesterday (today stays empty); behavior covers completed weeks only (this week unrated).
   Sprint marks: `26-08-03` (Phase 2) Sprints 1–3 · `26-05-02` (completed) Sprints 1–4. Schema v4 (`sprintMarks`).

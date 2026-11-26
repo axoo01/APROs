@@ -87,7 +87,7 @@ interface UserSeed {
 }
 
 const USERS: readonly UserSeed[] = [
-  { fullName: 'Abena Owusu-Ansah', email: 'abena.owusu-ansah@apros.demo', role: 'ADMIN', title: 'Head of Coaches' },
+  { fullName: 'Bob Karemera', email: 'bob.karemera@apros.demo', role: 'ADMIN', title: 'Head of Coaches' },
   { fullName: 'Daniel Nkansah', email: 'daniel.nkansah@apros.demo', role: 'ADMIN', title: 'Cohort Lead' },
   { fullName: 'Jamillah', email: 'jamillah@apros.demo', role: 'COACH', title: 'Coach' },
   { fullName: 'Favor', email: 'favor@apros.demo', role: 'COACH', title: 'Coach' },
@@ -587,9 +587,8 @@ function buildEodHistory(
 
 // ── Weekly behavior ───────────────────────────────────────────────────────────
 
-/** Weeks rated in the demo: the last few completed cohort weeks; the current week is only partly rated. */
+/** Weeks rated in the demo: the last few *completed* cohort weeks. The current week is left unrated for the live demo. */
 const BEHAVIOR_HISTORY_WEEKS = 3;
-const CURRENT_WEEK_RATED_SHARE = 0.4;
 
 const BEHAVIOR_CUSTOM_NOTES: Readonly<Record<BehaviorRating, readonly string[]>> = {
   '+H': ['Led the sprint demo and mentored two peers.', 'Owned the release checklist end to end.'],
@@ -600,7 +599,7 @@ const BEHAVIOR_CUSTOM_NOTES: Readonly<Record<BehaviorRating, readonly string[]>>
   '-L': ['Unreachable for most of the week — escalated to the cohort lead.'],
 };
 
-/** Current-week ratings forced on the planted behind-streak apprentices (same order) — EOD + behavior dip together. */
+/** Last-week ratings forced on the planted behind-streak apprentices (same order) — EOD + behavior dip together. */
 const PLANTED_DRIFT_RATINGS: readonly BehaviorRating[] = ['-M', '-M', '-H'];
 
 /** Maps a week's attendance + EOD signal (0–1) to the 6-tier scale. */
@@ -615,7 +614,7 @@ function ratingFor(score: number): BehaviorRating {
 
 /**
  * Weekly ratings for the live cohort, derived from that week's attendance and EOD (with a little noise):
- * the last {@link BEHAVIOR_HISTORY_WEEKS} completed weeks fully rated, the current week partly rated.
+ * the last {@link BEHAVIOR_HISTORY_WEEKS} completed weeks fully rated; the current week stays unrated.
  */
 function buildBehaviorHistory(
   cohorts: readonly Cohort[],
@@ -630,16 +629,14 @@ function buildBehaviorHistory(
   const cohort = cohorts[seeds.findIndex((c) => c.live)];
   if (!cohort) return [];
   const weeks = cohortWeeks(cohort, today);
-  const current = weeks.at(-1);
-  const rated = [...weeks.slice(0, -1).slice(-BEHAVIOR_HISTORY_WEEKS), ...(current ? [current] : [])];
+  const rated = weeks.slice(0, -1).slice(-BEHAVIOR_HISTORY_WEEKS);
+  const lastCompleted = rated.at(-1);
   const members = apprentices.filter((a) => a.cohortId === cohort.id && a.status === 'ACTIVE');
   const out = new Map<Id, WeeklyBehaviorRecord>();
 
   for (const week of rated) {
-    const isCurrent = week === current;
     const inWeek = (date: IsoDate) => date >= week.start && date <= week.end;
     for (const a of members) {
-      if (isCurrent && rng.next() > CURRENT_WEEK_RATED_SHARE) continue;
       const att = summarizeAttendance(attendance.filter((r) => r.apprenticeId === a.id && inWeek(r.date)));
       const pacing = tallyEod(eod.filter((r) => r.apprenticeId === a.id && inWeek(r.date)));
       if (att.total === 0) continue;
@@ -663,19 +660,19 @@ function buildBehaviorHistory(
     }
   }
 
-  // Planted drift: this week's rating dips for the apprentices whose EOD is sliding.
-  if (current) {
-    const day = addDays(today, -1);
+  // Planted drift: last week's rating dips for the apprentices whose EOD is sliding.
+  if (lastCompleted) {
+    const day = lastCompleted.end;
     driftIds.forEach((id, i) => {
       const a = members.find((m) => m.id === id);
       const rating = PLANTED_DRIFT_RATINGS[i];
       if (!a || !rating) return;
       const recordedAt = at(day, 16, 30);
-      out.set(behaviorId(id, current.start), {
-        id: behaviorId(id, current.start),
+      out.set(behaviorId(id, lastCompleted.start), {
+        id: behaviorId(id, lastCompleted.start),
         apprenticeId: id,
         cohortId: cohort.id,
-        weekStart: current.start,
+        weekStart: lastCompleted.start,
         rating,
         note: BEHAVIOR_DEFINITIONS[rating],
         recordedBy: a.coachId ?? id,

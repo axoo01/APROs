@@ -12,7 +12,7 @@ export const DEMO_PERSONAS: readonly DemoPersona[] = [
   {
     role: 'ADMIN',
     label: 'Head of Coaches',
-    email: 'abena.owusu-ansah@apros.demo',
+    email: 'bob.karemera@apros.demo',
     blurb: 'Full access — cohorts, onboarding, assignments and Phase 2 sprint marks.',
   },
   {
