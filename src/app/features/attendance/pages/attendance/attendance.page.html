@@ -133,7 +133,7 @@
 
     @if (showCloseout()) {
       <div
-        class="sticky bottom-[var(--dock-clear)] z-20 mt-6 [animation:fade-up_240ms_var(--ease-out-quart)] lg:bottom-6"
+        class="closeout-docked fixed inset-x-3 bottom-[var(--dock-clear)] z-30 [animation:fade-up_240ms_var(--ease-out-quart)] lg:sticky lg:inset-x-auto lg:bottom-6 lg:z-20 lg:mt-6"
       >
         <ap-closeout-bar
           [remaining]="f.remaining().length"
@@ -144,6 +144,8 @@
           (closeout)="closeoutOpen.set(true)"
         />
       </div>
+      <!-- Phones/tablets: the bar is pinned above the dock; this spacer lets the last cards scroll clear of it. -->
+      <div class="h-20 lg:hidden" aria-hidden="true"></div>
     }
   </div>
 
